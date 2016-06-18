@@ -17,7 +17,7 @@ var history = {};
 var isHost = false;
 
 //connect to server
-client.connect({port: 8124, host: '127.0.0.1'}, function() {
+client.connect({port: 8124, host: '192.168.0.97'}, function() {
   console.log("connected to server");
   // Say we are new client. State name and room.
   console.log("sending: " + "new|" + myName + "|" + roomName);
@@ -43,7 +43,7 @@ client.connect({port: 8124, host: '127.0.0.1'}, function() {
               var inputData = buf.split('|')[1];
               console.log("host ccontacted and is sending " + inputType);
               console.log(inputData);
-              switch (input) {
+              switch (inputType) {
                 case "history":
                   history = JSON.parse(inputData);
                   break;
