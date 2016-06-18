@@ -37,8 +37,6 @@ const server = net.createServer((c) => {
       default:
 
     }
-    console.log("rooms: ");
-    console.log(rooms);
 	});
 });
 

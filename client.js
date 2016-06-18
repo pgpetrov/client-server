@@ -51,7 +51,7 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
                   guests = connectToGuests(JSON.parse(inputData));
                   break;
                 case "guest":
-                  guests.push = connectToGuests([JSON.parse(inputData)])[0];
+                  guests.push(connectToGuests([JSON.parse(inputData)])[0]);
                   break;
                 default:
               }
@@ -72,17 +72,28 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
 
         let newClientSocket = new net.Socket();
         newClientSocket.connect({port: 8125, host: guestHost}, function() {
+          console.log("host sending start");
+          var stringGuests = guests.map((x) => { return {
+            guestHost : x.guestHost,
+            name : x.name
+          };});
+          console.log(guests);
+          console.log(stringGuests);
+          console.log(JSON.stringify(stringGuests));
+          console.log('----');
           newClientSocket.write("history|"+JSON.stringify(history));
           newClientSocket.write("guests|"+JSON.stringify(guests.map((x) => { return {
             guestHost : x.guestHost,
-            name : x.guestName
+            name : x.name
           };})));
         });
-        guests.push = {
+
+
+        guests.push({
           guestHost : guestHost,
           name : guestName,
           clientSocket : newClientSocket
-        }
+        });
 
         break;
       default:
@@ -112,15 +123,15 @@ var connectToGuests = function(gs) {
 
 
 
-// var recordAndBroadast = function (message, sender) {
-// 	clients.map(function(x) {
-// 		// don't broadcast to the sender
-// 		if (x != sender) {
-// 			x.write(message);
-// 		}
-// 	});
-// 	history.push(message);
-// }
+var broadastGuest = function (guest) {
+	guests.map(function(x) {
+			x.clientSocket.write("guest|"+JSON.stringify({
+        guestHost : guest.guestHost,
+        name : guest.name
+      }));
+	});
+	history.push(message);
+}
 
 
 
