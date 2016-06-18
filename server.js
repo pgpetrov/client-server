@@ -26,7 +26,7 @@ const server = net.createServer((c) => {
             console.log('--------------------------');
             console.log("guest came: " + clientName);
             console.log("guest room: " + clientRoom);
-            console.log("room host: " + clientRoom);
+            console.log("room host: " + rooms[clientRoom].host);
             console.log("sending to host: " + "newGuest|"+clientName+"|"+c.remoteAddress.split(':')[3]);
 
             rooms[clientRoom].hostSocket.write("newGuest|"+clientName+"|"+c.remoteAddress.split(':')[3]);
