@@ -40,7 +40,6 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
           // I am guest. Waiting for the host to contact me.
           const clientServer = net.createServer((c) => {
             c.on('data', function(buf) {
-              c.write('roger host!');
               buf = buf.toString();
               var inputType = buf.split('||')[0];
               var historyData = buf.split('||')[1];
@@ -53,8 +52,6 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
                 guests = connectToGuests(JSON.parse(guestsData));
                 guests.map((x) => {
                   if (x.isHost) {
-                    console.log(x.name + " is host setting socket");
-                    c.write("socket set for " + myName);
                     x.clientSocket = c;
                   }
                   return x;
