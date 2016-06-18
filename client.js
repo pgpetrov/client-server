@@ -101,7 +101,7 @@ var connectToGuests = function(gs) {
   return gs.map(function(x) {
     let xClient = new net.Socket();
     xClient.connect({port: 8125, host: x.guestHost}, function() {
-      c.on('data', function(buf) {
+      xClient.on('data', function(buf) {
         buf = buf.toString();
         console.log(buf);
         history.push(buf);
@@ -113,7 +113,10 @@ var connectToGuests = function(gs) {
 }
 
 rl.on('line', (input) => {
-  guests.map(x => x.clientSocket.write(myName + ": " + input));
+  guests.map(x => x.clientSocket.write(myName + ": " + input),
+  function() {
+    history.push(buf);
+  });
 });
 
 
