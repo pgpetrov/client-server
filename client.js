@@ -69,6 +69,8 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
         let guestHost = data.split('|')[2];
 
         let newClientSocket = new net.Socket();
+        console.log("history");
+        console.log(history);
         newClientSocket.connect({port: 8125, host: guestHost}, function() {
           var stringGuests = guests.map((x) => { return {
             guestHost : x.guestHost,
@@ -113,7 +115,7 @@ var connectToGuests = function(gs) {
 }
 
 rl.on('line', (input) => {
-  history.push(buf);
+  history.push(myName + ": " + input);
   guests.map(x => x.clientSocket.write(myName + ": " + input));
 });
 
