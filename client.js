@@ -40,6 +40,7 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
           // I am guest. Waiting for the host to contact me.
           const clientServer = net.createServer((c) => {
             c.on('data', function(buf) {
+              c.write('roger host!');
               buf = buf.toString();
               var inputType = buf.split('||')[0];
               var historyData = buf.split('||')[1];
@@ -50,6 +51,14 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
                 console.log(guestsData);
                 history = JSON.parse(historyData);
                 guests = connectToGuests(JSON.parse(guestsData));
+                guests.map((x) => {
+                  if (x.isHost) {
+                    console.log(x.name + " is host setting socket");
+                    c.write("socket set for " + myName);
+                    x.clientSocket = c;
+                  }
+                  return x;
+                });
                 initialized = true;
               } else {
                 console.log(buf);
@@ -108,6 +117,7 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
 var connectToGuests = function(gs) {
   return gs.map(function(x) {
     //do not connect to host he is allready connected to us.
+    if (!x.isHost) {
       let xClient = new net.Socket();
       xClient.connect({port: 8125, host: x.guestIp}, function() {
         xClient.on('data', function(buf) {
@@ -117,6 +127,7 @@ var connectToGuests = function(gs) {
         });
       });
       x.clientSocket = xClient;
+    }
     return x;
   });
 }
