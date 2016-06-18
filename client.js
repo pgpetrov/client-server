@@ -33,7 +33,7 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
         // I am host.
         console.log('I am host');
         isHost = true;
-        myIp = data.split('|')[0];
+        myIp = data.split('|')[1];
         break;
       case "guest":
           console.log('I am guest, waiting for the host.');
