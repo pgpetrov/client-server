@@ -113,10 +113,8 @@ var connectToGuests = function(gs) {
 }
 
 rl.on('line', (input) => {
-  guests.map(x => x.clientSocket.write(myName + ": " + input),
-  function() {
-    history.push(buf);
-  });
+  history.push(buf);
+  guests.map(x => x.clientSocket.write(myName + ": " + input));
 });
 
 
