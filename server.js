@@ -4,9 +4,7 @@ var rooms = {};
 const server = net.createServer((c) => {
   c.on('data', function(buf) {
     buf = buf.toString();
-    console.log(buf);
     var type = buf.split('|')[0];
-    console.log(type);
     //type|name|clientRoom
     switch (type) {
       case "new":

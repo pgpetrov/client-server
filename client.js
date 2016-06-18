@@ -84,6 +84,11 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
         console.log("history");
         console.log(history);
         newClientSocket.connect({port: 8125, host: guestIp}, function() {
+          newClientSocket.on('data',  function(buf) {
+            buf = buf.toString();
+            console.log(buf);
+            history.push(buf);
+          });
           var guestsToSend = guests.map((x) => { return {
             guestIp : x.guestIp,
             name : x.name,
