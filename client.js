@@ -45,17 +45,11 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
               var historyData = buf.split('||')[1];
               var guestsData = buf.split('||')[2];
               if (!initialized && inputType == "historyGuests") {
-                console.log("host ccontacted and is sending " + inputType);
+                console.log("host called and is sending " + inputType);
                 console.log(historyData);
                 console.log(guestsData);
                 history = JSON.parse(historyData);
                 guests = connectToGuests(JSON.parse(guestsData));
-                guests.map((x) => {
-                  if (x.isHost) {
-                    x.clientSocket = c;
-                  }
-                  return x;
-                });
                 initialized = true;
               } else {
                 console.log(buf);
@@ -63,6 +57,10 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
               }
             });
           });
+          clientServer.on('error', (err) => {
+            throw err;
+          });
+
           clientServer.listen(8125, () => {
             console.log('guestServer bound');
           });
@@ -110,7 +108,6 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
 var connectToGuests = function(gs) {
   return gs.map(function(x) {
     //do not connect to host he is allready connected to us.
-    if (!x.isHost) {
       let xClient = new net.Socket();
       xClient.connect({port: 8125, host: x.guestIp}, function() {
         xClient.on('data', function(buf) {
@@ -120,7 +117,6 @@ var connectToGuests = function(gs) {
         });
       });
       x.clientSocket = xClient;
-    }
     return x;
   });
 }
