@@ -1,11 +1,13 @@
 "use strict";
 var net = require('net');
 var client = new net.Socket();
-// var readline = require('readline');
-// const rl = readline.createInterface({
-//   input: process.stdin,
-//   output: process.stdout
-// });
+
+//
+var readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
 
 var myName = process.argv[2];
@@ -15,6 +17,7 @@ var roomName = process.argv[3];
 var guests = [];
 var history = {};
 var isHost = false;
+var initialized = false;
 
 //connect to server
 client.connect({port: 8124, host: '192.168.0.97'}, function() {
@@ -39,18 +42,19 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
           const clientServer = net.createServer((c) => {
             c.on('data', function(buf) {
               buf = buf.toString();
-              var inputType = buf.split('|')[0];
-              var inputData = buf.split('|')[1];
-              console.log("host ccontacted and is sending " + inputType);
-              console.log(inputData);
-              switch (inputType) {
-                case "history":
-                  history = JSON.parse(inputData);
-                  break;
-                case "guests":
-                  guests = connectToGuests(JSON.parse(inputData));
-                  break;
-                default:
+              var inputType = buf.split('||')[0];
+              var historyData = buf.split('||')[1];
+              var guestsData = buf.split('||')[2];
+              if (!initialized && inputType == "historyGuests") {
+                console.log("host ccontacted and is sending " + inputType);
+                console.log(historyData);
+                console.log(guestsData);
+                history = JSON.parse(historyData);
+                guests = connectToGuests(JSON.parse(guestsData));
+                initialized = true;
+              } else {
+                console.log(buf);
+                history.push(buf);
               }
             });
           });
@@ -70,8 +74,7 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
             guestHost : x.guestHost,
             name : x.name
           };});
-          newClientSocket.write("history|"+JSON.stringify(history));
-          newClientSocket.write("guests|"+JSON.stringify(guests.map((x) => { return {
+          newClientSocket.write("historyGuests||"+JSON.stringify(history) + "||" + JSON.stringify(guests.map((x) => { return {
             guestHost : x.guestHost,
             name : x.name
           };})),
@@ -91,9 +94,6 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
   // client.on('close', () => {console.log('closiiiiiing');})
   // client.on('end', () => {console.log('closiiiiiing');})
 
-	// rl.on('line', (input) => {
-	// 	client.write(myName + ": " + input);
-	// });
 });
 
 
@@ -112,8 +112,9 @@ var connectToGuests = function(gs) {
   });
 }
 
-
-
+rl.on('line', (input) => {
+  guests.map(x => x.clientSocket.write(myName + ": " + input));
+});
 
 
 
