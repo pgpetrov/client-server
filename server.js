@@ -17,18 +17,9 @@ const server = net.createServer((c) => {
               "host" : clientName,
               "hostSocket" : c
             };
-            c.write("host");
-            console.log('--------------------------');
-            console.log("host came: " + clientName);
-            console.log("host room: " + clientRoom);
+            c.write("host|"+c.remoteAddress.split(':')[3]);
           } else {
             c.write("guest");
-            console.log('--------------------------');
-            console.log("guest came: " + clientName);
-            console.log("guest room: " + clientRoom);
-            console.log("room host: " + rooms[clientRoom].host);
-            console.log("sending to host: " + "newGuest|"+clientName+"|"+c.remoteAddress.split(':')[3]);
-
             rooms[clientRoom].hostSocket.write("newGuest|"+clientName+"|"+c.remoteAddress.split(':')[3]);
             //TODO see how to close
             c.end();

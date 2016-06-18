@@ -18,12 +18,10 @@ var guests = [];
 var history = [];
 var isHost = false;
 var initialized = false;
-
+var myIp;
 //connect to server
 client.connect({port: 8124, host: '192.168.0.97'}, function() {
-  console.log("connected to server");
   // Say we are new client. State name and room.
-  console.log("sending: " + "new|" + myName + "|" + roomName);
   client.write("new|" + myName + "|" + roomName);
 
   client.on('data', function(data) {
@@ -35,6 +33,7 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
         // I am host.
         console.log('I am host');
         isHost = true;
+        myIp = data.split('|')[0];
         break;
       case "guest":
           console.log('I am guest, waiting for the host.');
@@ -51,6 +50,12 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
                 console.log(guestsData);
                 history = JSON.parse(historyData);
                 guests = connectToGuests(JSON.parse(guestsData));
+                guests.map((x) => {
+                  if (x.isHost) {
+                    x.clientSocket = c;
+                  }
+                  return x;
+                });
                 initialized = true;
               } else {
                 console.log(buf);
@@ -66,23 +71,26 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
       case "newGuest":
         // new guest came and we are the host. connect and flush users and history.
         let guestName = data.split('|')[1];
-        let guestHost = data.split('|')[2];
+        let guestIp = data.split('|')[2];
 
         let newClientSocket = new net.Socket();
         console.log("history");
         console.log(history);
-        newClientSocket.connect({port: 8125, host: guestHost}, function() {
-          var stringGuests = guests.map((x) => { return {
-            guestHost : x.guestHost,
-            name : x.name
+        newClientSocket.connect({port: 8125, host: guestIp}, function() {
+          var gustsToSend = guests.map((x) => { return {
+            guestIp : x.guestIp,
+            name : x.name,
+            isHost : false
           };});
-          newClientSocket.write("historyGuests||"+JSON.stringify(history) + "||" + JSON.stringify(guests.map((x) => { return {
-            guestHost : x.guestHost,
-            name : x.name
-          };})),
+          guestsToSend.push({
+            guestIp : myIp,
+            name : myName,
+            isHost : true
+          });
+          newClientSocket.write("historyGuests||"+JSON.stringify(history) + "||" + JSON.stringify(gustsToSend),
           function() {
             guests.push({
-                    guestHost : guestHost,
+                    guestIp : guestIp,
                     name : guestName,
                     clientSocket : newClientSocket
                   });
@@ -101,15 +109,18 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
 
 var connectToGuests = function(gs) {
   return gs.map(function(x) {
-    let xClient = new net.Socket();
-    xClient.connect({port: 8125, host: x.guestHost}, function() {
-      xClient.on('data', function(buf) {
-        buf = buf.toString();
-        console.log(buf);
-        history.push(buf);
+    //do not connect to host he is allready connected to us.
+    if (!x.isHost) {
+      let xClient = new net.Socket();
+      xClient.connect({port: 8125, host: x.guestIp}, function() {
+        xClient.on('data', function(buf) {
+          buf = buf.toString();
+          console.log(buf);
+          history.push(buf);
+        });
       });
-    });
-    x.clientSocket = xClient;
+      x.clientSocket = xClient;
+    }
     return x;
   });
 }
