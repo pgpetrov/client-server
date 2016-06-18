@@ -15,7 +15,7 @@ var roomName = process.argv[3];
 
 
 var guests = [];
-var history = {};
+var history = [];
 var isHost = false;
 var initialized = false;
 
