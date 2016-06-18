@@ -50,9 +50,6 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
                 case "guests":
                   guests = connectToGuests(JSON.parse(inputData));
                   break;
-                case "guest":
-                  guests.push(connectToGuests([JSON.parse(inputData)])[0]);
-                  break;
                 default:
               }
             });
@@ -66,35 +63,26 @@ client.connect({port: 8124, host: '192.168.0.97'}, function() {
         // new guest came and we are the host. connect and flush users and history.
         let guestName = data.split('|')[1];
         let guestHost = data.split('|')[2];
-        console.log('new guest came we need to flush all to him');
-        console.log('host: '+ guestHost);
-        console.log('name: '+ guestName);
 
         let newClientSocket = new net.Socket();
         newClientSocket.connect({port: 8125, host: guestHost}, function() {
-          console.log("host sending start");
           var stringGuests = guests.map((x) => { return {
             guestHost : x.guestHost,
             name : x.name
           };});
-          console.log(guests);
-          console.log(stringGuests);
-          console.log(JSON.stringify(stringGuests));
-          console.log('----');
           newClientSocket.write("history|"+JSON.stringify(history));
           newClientSocket.write("guests|"+JSON.stringify(guests.map((x) => { return {
             guestHost : x.guestHost,
             name : x.name
-          };})));
+          };})),
+          function() {
+            guests.push({
+                    guestHost : guestHost,
+                    name : guestName,
+                    clientSocket : newClientSocket
+                  });
+          });
         });
-
-
-        guests.push({
-          guestHost : guestHost,
-          name : guestName,
-          clientSocket : newClientSocket
-        });
-
         break;
       default:
     }
@@ -113,25 +101,17 @@ var connectToGuests = function(gs) {
   return gs.map(function(x) {
     let xClient = new net.Socket();
     xClient.connect({port: 8125, host: x.guestHost}, function() {
+      c.on('data', function(buf) {
+        buf = buf.toString();
+        console.log(buf);
+        history.push(buf);
+      });
     });
     x.clientSocket = xClient;
     return x;
   });
 }
 
-
-
-
-
-var broadastGuest = function (guest) {
-	guests.map(function(x) {
-			x.clientSocket.write("guest|"+JSON.stringify({
-        guestHost : guest.guestHost,
-        name : guest.name
-      }));
-	});
-	history.push(message);
-}
 
 
 
