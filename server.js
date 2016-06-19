@@ -63,7 +63,7 @@ var handleHostLogic = function(c) {
                   rooms[clientRoom].name = rooms[clientRoom].roomGusets[0].name;
                   rooms[clientRoom].hostIp = rooms[clientRoom].roomGusets[0].guestIp;
                   rooms[clientRoom].roomGusets.splice(0,1);
-                  console.log( rooms[clientRoom].name " promoted to host for room" + clientRoom + "!");
+                  console.log( rooms[clientRoom].name + " promoted to host for room" + clientRoom + "!");
 
                   var client = new net.Socket();
 
