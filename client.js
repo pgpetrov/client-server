@@ -185,8 +185,8 @@ var handleGuestLogic = function (data) {
 
 process.on('SIGINT', function() {
   console.log('sigint outside');
-  client.write('exitting');
   client.end();
+  process.exit();
 });
 
 
