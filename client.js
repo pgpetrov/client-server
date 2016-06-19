@@ -36,6 +36,7 @@ client.connect({port: 8124, host: serverIp}, function() {
         myIp = data.split('|')[1];
         break;
       case "guest":
+          client.end();
           // Server says I am guest. Waiting for the host to contact me.
           myIp = data.split('|')[1];
           const clientServer = net.createServer((c) => {
@@ -164,8 +165,8 @@ var handleGuestLogic = function (data) {
 
     newClientSocket.on('end', () => {
         console.log("clientSOCKET closed");
-        broadcastAndSave("system> " + guestName + " disconnected!");
         guests = guests.filter((x) => x.guestIp != guestIp);
+        broadcastAndSave("system> " + guestName + " disconnected!");
     })
 
     newClientSocket.write("historyGuests|"+JSON.stringify(history) + "|" + JSON.stringify(guestsToSend),

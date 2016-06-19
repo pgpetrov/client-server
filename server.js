@@ -48,13 +48,14 @@ var handleHostLogic = function(c) {
           let clientRoom = buf.split('|')[2];
           let guestIp = c.remoteAddress.split(':')[3];
           if (!rooms[clientRoom]) {
-            rooms[clientRoom] = {
-              name : clientName,
-              hostIp : guestIp,
-              hostSocket : c,
-              roomGuests : []
-            };
+              rooms[clientRoom] = {
+                name : clientName,
+                hostIp : guestIp,
+                hostSocket : c,
+                roomGuests : []
+              };
               c.on('end', () => {
+                console.log(c.remoteAddress.split(':')[3]);
                 console.log("OUCH host " + clientName + " for room " + clientRoom + " disconnected!");
                 console.log(rooms[clientRoom].roomGuests);
                 // Handle hosts disconnect
