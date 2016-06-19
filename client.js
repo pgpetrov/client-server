@@ -127,7 +127,7 @@ var broadcastAndSave = function (message) {
 
 
 
-var handleGuestLogic = function () {
+var handleGuestLogic = function (data) {
   // new guest came and we are the host. connect and flush users and history.
   let guestName = data.split('|')[1];
   let guestIp = data.split('|')[2];
