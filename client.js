@@ -70,8 +70,18 @@ client.connect({port: 8124, host: serverIp}, function() {
                 console.log(buf);
                 history.push(buf);
               }
+
+              process.on('SIGINT', function() {
+                console.log('sigint inside');
+                c.end();
+                client.end();
+                process.exit();
+              });
+
+
             });
           });
+
           clientServer.on('error', (err) => {
             throw err;
           });
@@ -154,6 +164,7 @@ var handleGuestLogic = function (data) {
     });
 
     newClientSocket.on('close', () => {
+        console.log("clientSOCKET closed");
         broadcastAndSave("system> " + guestName + " disconnected!");
         guests = guests.filter((x) => x.guestIp != guestIp);
     })
@@ -172,8 +183,11 @@ var handleGuestLogic = function (data) {
 }
 
 
-
-
+process.on('SIGINT', function() {
+  console.log('sigint outside');
+  client.write('exitting');
+  client.end();
+});
 
 
 
