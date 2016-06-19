@@ -11,9 +11,9 @@ const server = net.createServer((c) => {
 //   rooms[room].hostSocket.on('end', () => {
 //     console.log("OUCH host " + name + " for room " + room + "disconnected!");
 //     // Handle hosts disconnect
-//     rooms[room].name = rooms[room].roomGusets[0].name;
-//     rooms[room].hostIp = rooms[room].roomGusets[0].guestIp;
-//     rooms[room].roomGusets.splice(0,1);
+//     rooms[room].name = rooms[room].roomGuests[0].name;
+//     rooms[room].hostIp = rooms[room].roomGuests[0].guestIp;
+//     rooms[room].roomGuests.splice(0,1);
 //
 //     var client = new net.Socket();
 //
@@ -52,24 +52,25 @@ var handleHostLogic = function(c) {
               name : clientName,
               hostIp : guestIp,
               hostSocket : c,
-              roomGusets : []
+              roomGuests : []
             };
 
 
               c.on('end', () => {
                 console.log("OUCH host " + clientName + " for room " + clientRoom + " disconnected!");
+                console.log(rooms[clientRoom].roomGuests);
                 // Handle hosts disconnect
-                if (rooms[clientRoom].roomGusets.length > 0) {
-                  rooms[clientRoom].name = rooms[clientRoom].roomGusets[0].name;
-                  rooms[clientRoom].hostIp = rooms[clientRoom].roomGusets[0].guestIp;
-                  rooms[clientRoom].roomGusets.splice(0,1);
+                if (rooms[clientRoom].roomGuests.length > 0) {
+                  rooms[clientRoom].name = rooms[clientRoom].roomGuests[0].name;
+                  rooms[clientRoom].hostIp = rooms[clientRoom].roomGuests[0].guestIp;
+                  rooms[clientRoom].roomGuests.splice(0,1);
                   console.log( rooms[clientRoom].name + " promoted to host for room" + clientRoom + "!");
 
                   var client = new net.Socket();
 
-                  client.connect({port: 8124, host: rooms[clientRoom].hostIp}, function() {
+                  client.connect({port: 8125, host: rooms[clientRoom].hostIp}, function() {
                     // Tell first guest he is the Host now.
-                    client.write("BECOMINGHOST|"+rooms[room].hostIp);
+                    client.write("BECOMINGHOST|"+rooms[clientRoom].hostIp);
                     client.on("data", handleHostLogic(client));
                   });
                   rooms[clientRoom].hostSocket=client;
@@ -85,12 +86,13 @@ var handleHostLogic = function(c) {
             //respond you are host now and send the your ip. will be needed later
             c.write("host|"+guestIp);
           } else {
+            //guest came for this room
             c.write("guest");
             rooms[clientRoom].hostSocket.write("newGuest|"+clientName+"|"+guestIp);
-            rooms[clientRoom].roomGusets.push[{
+            rooms[clientRoom].roomGuests.push({
               name : clientName,
               guestIp : guestIp
-            }];
+            });
             c.end();
           }
         break;

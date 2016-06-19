@@ -40,10 +40,10 @@ client.connect({port: 8124, host: serverIp}, function() {
           const clientServer = net.createServer((c) => {
             c.on('data', function(buf) {
               buf = buf.toString();
-              var inputType = buf.split('||')[0];
+              var inputType = buf.split('|')[0];
               if (!initialized && inputType == "historyGuests") {
-                let historyData = buf.split('||')[1];
-                let guestsData = buf.split('||')[2];
+                let historyData = buf.split('|')[1];
+                let guestsData = buf.split('|')[2];
                 history = JSON.parse(historyData);
                 guests = connectToGuests(JSON.parse(guestsData));
                 guests.map((x) => {
@@ -169,7 +169,7 @@ var handleGuestLogic = function (data) {
         guests = guests.filter((x) => x.guestIp != guestIp);
     })
 
-    newClientSocket.write("historyGuests||"+JSON.stringify(history) + "||" + JSON.stringify(guestsToSend),
+    newClientSocket.write("historyGuests|"+JSON.stringify(history) + "|" + JSON.stringify(guestsToSend),
     function() {
       //after new guest has history and other guestst record him also
       guests.push({
