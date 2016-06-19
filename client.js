@@ -37,6 +37,7 @@ client.connect({port: 8124, host: serverIp}, function() {
         break;
       case "guest":
           // Server says I am guest. Waiting for the host to contact me.
+          myIp = data.split('|')[1];
           const clientServer = net.createServer((c) => {
             c.on('data', function(buf) {
               buf = buf.toString();
@@ -64,7 +65,6 @@ client.connect({port: 8124, host: serverIp}, function() {
                   if (commandComingFrom == serverIp) {
                     //Server connected and promoted me to host.
                     isHost = true;
-                    myIp = buf.split('|')[1];
                     console.log("system> " + myName + ' is host');
                     history.push("system> " + myName + ' is host');
                   }

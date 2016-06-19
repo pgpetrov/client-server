@@ -54,8 +54,6 @@ var handleHostLogic = function(c) {
               hostSocket : c,
               roomGuests : []
             };
-
-
               c.on('end', () => {
                 console.log("OUCH host " + clientName + " for room " + clientRoom + " disconnected!");
                 console.log(rooms[clientRoom].roomGuests);
@@ -87,12 +85,13 @@ var handleHostLogic = function(c) {
             c.write("host|"+guestIp);
           } else {
             //guest came for this room
-            c.write("guest");
+            c.write("guest|"+guestIp);
             rooms[clientRoom].hostSocket.write("newGuest|"+clientName+"|"+guestIp);
             rooms[clientRoom].roomGuests.push({
               name : clientName,
               guestIp : guestIp
             });
+            c.end();
             c.destroy();
           }
         break;
