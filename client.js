@@ -43,9 +43,6 @@ client.connect({port: 8124, host: serverIp}, function() {
           // Server says I am guest. Waiting for the host to contact me.
           myIp = data.split('|')[1];
           const clientServer = net.createServer((c) => {
-            c.on('connect', function() {
-              c.ip = c.remoteAddress.split(':')[3];
-            });
             c.on('data', function(buf) {
               buf = buf.toString();
               var inputType = buf.split('|')[0];
@@ -150,8 +147,8 @@ var connectToGuests = function(gs) {
 
 rl.on('line', (input) => {
   if (input == "exit") {
-    guests.map(x => x.clientSocket.end());
-    setImmediate(process.exit());
+    guests.map((x) => {x.clientSocket.end(); return x;});
+    // setImmediate(process.exit());
   } else {
     history.push(myName + ": " + input);
     guests.map(x => x.clientSocket.write(myName + ": " + input));
@@ -180,6 +177,14 @@ var handleGuestLogic = function (data) {
       console.log(buf);
       history.push(buf);
     });
+    // On that guest FIN package remove him from guests array and broadcast he disconnected.
+    newClientSocket.on('end', () => {
+        guests = guests.filter((x) => x.guestIp != guestIp);
+        console.log("system3> " + guestName + " disconnected!");
+        history.push("system3> " + guestName + " disconnected!");
+        // broadcastAndSave("system> " + guestName + " disconnected!");
+    })
+
     //send guests name and ip only. Client will create connection socket himself.
     var guestsToSend = guests.map((x) => { return {
       guestIp : x.guestIp,
@@ -193,17 +198,10 @@ var handleGuestLogic = function (data) {
       isHost : true
     });
 
-    // On that guest FIN package remove him from guests array and broadcast he disconnected.
-    newClientSocket.on('end', () => {
-        guests = guests.filter((x) => x.guestIp != guestIp);
-        console.log("system3> " + guestName + " disconnected!");
-        history.push("system3> " + guestName + " disconnected!");
-        // broadcastAndSave("system> " + guestName + " disconnected!");
-    })
     // flush history and guests and then save him to guests
     newClientSocket.write("historyGuests|"+JSON.stringify(history) + "|" + JSON.stringify(guestsToSend),
     function() {
-      //after new guest has history and other guestst record him also
+      //after new guest has history and other guests record him also
       guests.push({
               guestIp : guestIp,
               name : guestName,
