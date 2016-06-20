@@ -31,7 +31,9 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
           myIp = data.split('|')[1];
           myTopology = topology(myIp, []);
           myTopology.on("connection", function(s) {
-            s.on("data", (data) => {console.log(data);});
+            s.on("data", function (data) {
+              console.log(data);
+            });
           });
           clientSocket.end();
         break;
