@@ -152,7 +152,7 @@ var connectToGuests = function(gs) {
 rl.on('line', (input) => {
   if (input == "exit") {
     guests.map(x => x.clientSocket.end());
-    process.exit();
+    setImmediate(process.exit());
   } else {
     history.push(myName + ": " + input);
     guests.map(x => x.clientSocket.write(myName + ": " + input));
