@@ -2,7 +2,11 @@
 
 var topology = require('fully-connected-topology');
 var net = require('net');
-var clientSocket = new net.Socket();
+var readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
 var myName = process.argv[2];
 var roomName = process.argv[3] || "room1";
@@ -12,6 +16,8 @@ var myTopology;
 var history = [];
 var peers = [];
 var isHost = false;
+
+var clientSocket = new net.Socket();
 clientSocket.connect({port: 8124, host: serverIp}, function() {
     // Say we are new client. State name and room.
     clientSocket.write("new|" + myName + "|" + roomName);
@@ -67,6 +73,12 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
     });
 });
 
+
+
+rl.on('line', (input) => {
+  history.push(myName + ": " + input);
+  peers.forEach(function(x){myTopology.peer(x).write(myName + ": " + input)});
+});
 
 //
 //
