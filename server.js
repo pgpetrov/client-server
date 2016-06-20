@@ -3,6 +3,7 @@ const net = require('net');
 var rooms = {};
 const server = net.createServer((c) => {
   c.on('data', handleHostLogic(c));
+  c.on('end', handleHostDisconnectLogic);
 });
 
 
@@ -33,35 +34,6 @@ var handleHostLogic = function(c) {
               hostSocket : c,
               roomGuests : []
             };
-
-
-              c.on('end', () => {
-                console.log("OUCH host " + clientName + " for room " + clientRoom + " disconnected!");
-                console.log(rooms[clientRoom].roomGuests);
-                // Handle hosts disconnect
-                if (rooms[clientRoom].roomGuests.length > 0) {
-                  rooms[clientRoom].name = rooms[clientRoom].roomGuests[0].name;
-                  rooms[clientRoom].hostIp = rooms[clientRoom].roomGuests[0].guestIp;
-                  rooms[clientRoom].roomGuests.splice(0,1);
-                  console.log( rooms[clientRoom].name + " promoted to host for room " + clientRoom + "!");
-
-                  var client = new net.Socket();
-
-                  client.connect({port: 8125, host: rooms[clientRoom].hostIp}, function() {
-                    // Tell first guest he is the Host now.
-                    client.write("BECOMINGHOST|"+rooms[clientRoom].hostIp);
-                    client.on("data", handleHostLogic(client));
-                  });
-                  rooms[clientRoom].hostSocket=client;
-                } else {
-                  console.log("Destroying " + clientRoom + " as no one is left!");
-                  // host left and no more guests. drop room.
-                  rooms[clientRoom] = undefined;
-                }
-              });
-
-
-
             //respond you are host now and send the your ip. will be needed later
             c.write("host|"+guestIp);
           } else {
@@ -74,6 +46,20 @@ var handleHostLogic = function(c) {
             });
           }
         break;
+      case "disconnected":
+        let peerIpPort = buf.split('|')[1];
+        let clientRoom = buf.split('|')[2];
+        var peerIndex;
+        rooms[clientRoom].roomGuests.every(function(x,i){
+          if (x.guestIp == peerIpPort.split(":")[0]) {
+            peerIndex = i;
+            //break
+            return false;
+          } else {
+            return true;
+          }
+        });
+        if (peerIndex) rooms[clientRoom].roomGuests.splice(i , 1);
       default:
 
     }
@@ -81,7 +67,31 @@ var handleHostLogic = function(c) {
 };
 
 
+var handleHostDisconnectLogic = function()  {
 
+  console.log("OUCH host " + clientName + " for room " + clientRoom + " disconnected!");
+  console.log(rooms[clientRoom].roomGuests);
+  // Handle hosts disconnect
+  if (rooms[clientRoom].roomGuests.length > 0) {
+    rooms[clientRoom].name = rooms[clientRoom].roomGuests[0].name;
+    rooms[clientRoom].hostIp = rooms[clientRoom].roomGuests[0].guestIp;
+    rooms[clientRoom].roomGuests.splice(0,1);
+    console.log( rooms[clientRoom].name + " promoted to host for room " + clientRoom + "!");
+
+    var client = new net.Socket();
+
+    client.connect({port: 8125, host: rooms[clientRoom].hostIp}, function() {
+      // Tell first guest he is the Host now.
+      client.write("BECOMINGHOST|"+rooms[clientRoom].hostIp);
+      client.on("data", handleHostLogic(client));
+    });
+    rooms[clientRoom].hostSocket=client;
+  } else {
+    console.log("Destroying " + clientRoom + " as no one is left!");
+    // host left and no more guests. drop room.
+    rooms[clientRoom] = undefined;
+  }
+};
 
 
 

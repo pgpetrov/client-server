@@ -41,9 +41,11 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
               console.log(data);
             });
             s.on("end", function(){
+              //handle guestPeer disconnect
               peers.splice(peers.indexOf(peer), 1);
               history.push("system> "+peer+" disconnected");
               console.log("system> "+peer+" disconnected");
+              clientSocket.write("disconnected|"+peer+"|"+roomName);
             })
           });
         break;
