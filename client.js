@@ -44,7 +44,7 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
             s.on("data", function (data) {
               data = data.toString();
               var inputType = data.split('|')[0];
-              if (inputType == "historyGuests") {
+              if (inputType == "historyPeers") {
                 let historyData = JSON.parse(data.split('|')[1]);
                 let peerData = JSON.parse(data.split('|')[2]);
                 history = historyData;
@@ -67,18 +67,6 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
     });
 });
 
-
-var handleGuestIncomingData = function(data) {
-    data = data.toString();
-    var inputType = data.split('|')[0];
-    if (inputType == "historyGuests") {
-      let historyData = data.split('|')[1];
-      let peerData = data.split('|')[2];
-      history = JSON.parse(historyData);
-      guests = JSON.parse(peerData);
-      history.map((x) => {console.log(x); return x;});
-    }
-}
 
 //
 //
