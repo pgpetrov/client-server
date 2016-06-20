@@ -43,6 +43,9 @@ client.connect({port: 8124, host: serverIp}, function() {
           // Server says I am guest. Waiting for the host to contact me.
           myIp = data.split('|')[1];
           const clientServer = net.createServer((c) => {
+            c.on('connect', function() {
+              c.ip = c.remoteAddress.split(':')[3];
+            });
             c.on('data', function(buf) {
               buf = buf.toString();
               var inputType = buf.split('|')[0];
@@ -65,7 +68,7 @@ client.connect({port: 8124, host: serverIp}, function() {
                   }
                   break;
                 case "BECOMINGHOST":
-                  let commandComingFromIp = c.remoteAddress.split(':')[3];
+                  let commandComingFromIp = c.ip;
                   if (commandComingFromIp == serverIp) {
                     //Server connected and promoted me to host.
                     isHost = true;
@@ -84,7 +87,7 @@ client.connect({port: 8124, host: serverIp}, function() {
             });
 
             c.on('end', function() {
-              let endComingFromIp = c.remoteAddress.split(':')[3];
+              let endComingFromIp = c.ip;
               let disconnectedName;
               guests = guests.filter((x) => {
                 if (x.guestIp != endComingFromIp) {
