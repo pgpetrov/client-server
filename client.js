@@ -43,6 +43,9 @@ client.connect({port: 8124, host: serverIp}, function() {
           // Server says I am guest. Waiting for the host to contact me.
           myIp = data.split('|')[1];
           const clientServer = net.createServer((c) => {
+            c.on('connect', function() {
+              c.ip = c.remoteAddress.split(':')[3];
+            });
             c.on('data', function(buf) {
               buf = buf.toString();
               var inputType = buf.split('|')[0];
@@ -84,7 +87,9 @@ client.connect({port: 8124, host: serverIp}, function() {
             });
 
             c.on('end', function() {
-              let endComingFromIp = c.remoteAddress.split(':')[3]; //undefined find another way
+              // let endComingFromIp = c.remoteAddress.split(':')[3]; //undefined find another way
+              let endComingFromIp = c.ip;
+              console.log(endComingFromIp);
               let disconnectedName;
               guests = guests.filter((x) => {
                 disconnectedName = x.guestIp == endComingFromIp ? x.name:undefined;
