@@ -52,10 +52,10 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
               data = data.toString();
               var inputType = data.split('|')[0];
               if (inputType == "historyPeers") {
-                let historyData = JSON.parse(data.split('|')[1]);
-                let peerData = JSON.parse(data.split('|')[2]);
-                history = historyData;
-                peerData.forEach((x) => {myTopology.add(x)});
+                history = JSON.parse(data.split('|')[1]);
+                peers = JSON.parse(data.split('|')[2]);
+
+                peers.forEach((x) => {myTopology.add(x)});
                 history.map((x) => {console.log(x); return x;});
               } else {
                 history.push(data);

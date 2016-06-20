@@ -20,10 +20,11 @@ var topology = require('fully-connected-topology');
 // var t2 = topology('127.0.0.1:4002', ['127.0.0.1:4001', '127.0.0.1:4003']);
 // var t3 = topology('127.0.0.1:4003', ['127.0.0.1:4001', '127.0.0.1:4002']);
 
-var a = [1,2,3];
-console.log(a.slice());
-console.log(a.slice().push(4));
-console.log(a);
+var peers = [];
+var myIp = "123";
+var peersAndMe = peers.slice();
+peersAndMe.push(myIp+":8125");
+console.log(JSON.stringify(peersAndMe));
 
 
 
