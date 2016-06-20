@@ -173,8 +173,8 @@ var handleGuestLogic = function (data) {
 
     // On that guest FIN package remove him from guests array and broadcast he disconnected.
     newClientSocket.on('end', () => {
-        console.log("clientSOCKET closed");
         guests = guests.filter((x) => x.guestIp != guestIp);
+        console.log("system> " + guestName + " disconnected!");
         broadcastAndSave("system> " + guestName + " disconnected!");
     })
     // flush history and guests and then save him to guests
