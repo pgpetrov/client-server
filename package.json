@@ -4,6 +4,6 @@
   "version": "0.0.1",
   "description": "chat for tradeo",
   "dependencies": {
-    "co": "4.6.0"
+    "fully-connected-topology": "1.1.1"
   }
 }

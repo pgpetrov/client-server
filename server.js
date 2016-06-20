@@ -7,27 +7,6 @@ const server = net.createServer((c) => {
 
 
 
-// for (var room in rooms) {
-//   rooms[room].hostSocket.on('end', () => {
-//     console.log("OUCH host " + name + " for room " + room + "disconnected!");
-//     // Handle hosts disconnect
-//     rooms[room].name = rooms[room].roomGuests[0].name;
-//     rooms[room].hostIp = rooms[room].roomGuests[0].guestIp;
-//     rooms[room].roomGuests.splice(0,1);
-//
-//     var client = new net.Socket();
-//
-//     client.connect({port: 8124, host: rooms[room].hostIp}, function() {
-//       // Tell first guest he is the Host now.
-//       client.write("BECOMINGHOST|"+rooms[room].hostIp);
-//       client.on("data", handleHostLogic(client));
-//     });
-//     rooms[room].hostSocket=client;
-//   });
-//
-// }
-
-
 server.on('error', (err) => {
   throw err;
 });
@@ -93,7 +72,6 @@ var handleHostLogic = function(c) {
               name : clientName,
               guestIp : guestIp
             });
-            c.destroy();
           }
         break;
       default:

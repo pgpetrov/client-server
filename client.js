@@ -1,47 +1,44 @@
 "use strict";
 
-var ClientHost = require('./clientHost');
-var ClientGuest = require('./clientHost');
+var topology = require('fully-connected-topology');
 var net = require('net');
-var client = new net.Socket();
+var clientSocket = new net.Socket();
 
 var myName = process.argv[2];
 var roomName = process.argv[3] || "room1";
 var serverIp = process.argv[4] || "192.168.0.97"; //my home network ip
+var myIp;
+var myTopology;
 
-var customer;
-
-client.connect({port: 8124, host: serverIp}, function() {
+clientSocket.connect({port: 8124, host: serverIp}, function() {
     // Say we are new client. State name and room.
-    client.write("new|" + myName + "|" + roomName);
-    client.on('data', function(data) {
+    clientSocket.write("new|" + myName + "|" + roomName);
+    clientSocket.on('data', function(data) {
       data = data.toString();
       var type = data.split('|')[0];
       switch (type) {
         case "host":
           // I am host.
-          customer = new ClientHost({
-            name : myName,
-            ip : data.split('|')[1],
-            room : roomName,
-            serverSocket : client,
-            history : ["system> " + myName + ' is host'],
-            guests : []
-          });
-          break;
-          case "guest":
-            // I am guest.
-            customer = new ClientGuest({
-              name : myName,
-              ip : data.split('|')[1],
-              room : roomName,
-              history : [],
-              guests : []
-            });
-          break;
+          console.log("system> " + myName + ' is host');
+          history.push("system> " + myName + ' is host');
+          isHost = true;
+          myIp = data.split('|')[1];
+          myTopology = topology(myIp, []);
+
+        break;
+        case "guest":
+          myIp = data.split('|')[1];
+          myTopology = topology(myIp, []);
+          clientSocket.end();
+        break;
+        case "newGuest":
+          //we are host, new guest came
+          let guestIp = data.split('|')[2];
+          myTopology.add(guestIp+":8125");
+          t.peer(guestIp+":8125").write("hello new guest. I am the host");
+        break;
         default:
       }
-      customer.listen();
     });
 });
 
