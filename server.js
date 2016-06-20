@@ -47,19 +47,20 @@ var handleHostLogic = function(c) {
           }
         break;
       case "disconnected":
-        let peerIpPort = buf.split('|')[1];
-        let clientRoom = buf.split('|')[2];
-        var peerIndex;
-        rooms[clientRoom].roomGuests.every(function(x,i){
-          if (x.guestIp == peerIpPort.split(":")[0]) {
-            peerIndex = i;
-            //break
-            return false;
-          } else {
-            return true;
-          }
-        });
-        if (peerIndex) rooms[clientRoom].roomGuests.splice(i , 1);
+          let peerIpPort = buf.split('|')[1];
+          clientRoom = buf.split('|')[2];
+          var peerIndex;
+          rooms[clientRoom].roomGuests.every(function(x,i){
+            if (x.guestIp == peerIpPort.split(":")[0]) {
+              peerIndex = i;
+              //break
+              return false;
+            } else {
+              return true;
+            }
+          });
+          if (peerIndex) rooms[clientRoom].roomGuests.splice(i , 1);
+        break;
       default:
 
     }
