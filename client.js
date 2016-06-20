@@ -46,6 +46,7 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
               history.push("system> "+peer+" disconnected");
               console.log("system> "+peer+" disconnected");
               clientSocket.write("disconnected|"+peer+"|"+roomName);
+              myTopology.remove(peer);
             })
           });
         break;
@@ -73,10 +74,16 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
               console.log("system> "+peer+" disconnected");
             })
           });
-          clientSocket.end();
+          clientSocket.destroy();
         break;
         case "newGuest":
           //we are host, new guest came
+          let guestName = data.split('|')[1];
+          history.push("system> " + guestName + " connected");
+          console.log("system> " + guestName + " connected");
+          peers.forEach(function(x){
+            myTopology.peer(x).write(myName + ": " + input)
+          });
           let guestIp = data.split('|')[2];
           myTopology.add(guestIp+":8125");
         break;
