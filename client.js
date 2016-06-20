@@ -26,16 +26,15 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
           myIp = data.split('|')[1];
           myTopology = topology(myIp+":8125", []);
           myTopology.on("connection", function(s) {
-            console.log("CONNECTION CAME");
             s.write("hello new guest. I am the host");
           });
         break;
         case "guest":
-          console.log("i am guest creating topology");
           myIp = data.split('|')[1];
           myTopology = topology(myIp+":8125", []);
           myTopology.on("connection", function(s) {
             s.on("data", function (data) {
+              data = data.toString();
               console.log(data);
             });
           });
@@ -44,8 +43,6 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
         case "newGuest":
           //we are host, new guest came
           let guestIp = data.split('|')[2];
-          console.log("adding -> " + guestIp+":8125");
-          console.log(myTopology);
           myTopology.add(guestIp+":8125");
         break;
         default:
