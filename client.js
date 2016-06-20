@@ -34,11 +34,12 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
           myTopology = topology(myIp+":8125", []);
           myTopology.on("connection", function(s, peer) {
             // guest connected to host, sending peers and history.
-            // let peersAndMe = peers.slice();
-            // peersAndMe.push(myIp+":8125");
-            s.write("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(peers), function(){peers.push(peer)});
+            let peersAndMe = peers.slice();
+            peersAndMe.push(myIp+":8125");
+            s.write("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(peersAndMe), function(){peers.push(peer)});
             s.on("data", function(data){
               data = data.toString();
+              history.push(data);
               console.log(data);
             });
           });
@@ -57,6 +58,7 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
                 peerData.forEach((x) => {myTopology.add(x)});
                 history.map((x) => {console.log(x); return x;});
               } else {
+                history.push(data);
                 console.log(data);
               }
             });
@@ -77,7 +79,11 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
 
 rl.on('line', (input) => {
   history.push(myName + ": " + input);
-  peers.forEach(function(x){myTopology.peer(x).write(myName + ": " + input)});
+  console.log(peers);
+  peers.forEach(function(x){
+    console.log("sending to peer " + x);
+    myTopology.peer(x).write(myName + ": " + input)
+  });
 });
 
 //
