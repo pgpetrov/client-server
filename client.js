@@ -10,6 +10,7 @@ var serverIp = process.argv[4] || "192.168.0.97"; //my home network ip
 var myIp;
 var myTopology;
 var history = [];
+var peers = [];
 var isHost = false;
 clientSocket.connect({port: 8124, host: serverIp}, function() {
     // Say we are new client. State name and room.
@@ -25,8 +26,15 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
           isHost = true;
           myIp = data.split('|')[1];
           myTopology = topology(myIp+":8125", []);
-          myTopology.on("connection", function(s) {
-            s.write("hello new guest. I am the host");
+          myTopology.on("connection", function(s, peer) {
+            // guest connected to host, sending peers and history.
+            // let peersAndMe = peers.slice();
+            // peersAndMe.push(myIp+":8125");
+            s.write("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(peers), function(){peers.push(peer)});
+            s.on("data", function(data){
+              data = data.toString();
+              console.log(data);
+            });
           });
         break;
         case "guest":
@@ -35,7 +43,16 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
           myTopology.on("connection", function(s) {
             s.on("data", function (data) {
               data = data.toString();
-              console.log(data);
+              var inputType = data.split('|')[0];
+              if (inputType == "historyGuests") {
+                let historyData = JSON.parse(data.split('|')[1]);
+                let peerData = JSON.parse(data.split('|')[2]);
+                history = historyData;
+                peerData.forEach((x) => {myTopology.add(x)});
+                history.map((x) => {console.log(x); return x;});
+              } else {
+                console.log(data);
+              }
             });
           });
           clientSocket.end();
@@ -50,6 +67,18 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
     });
 });
 
+
+var handleGuestIncomingData = function(data) {
+    data = data.toString();
+    var inputType = data.split('|')[0];
+    if (inputType == "historyGuests") {
+      let historyData = data.split('|')[1];
+      let peerData = data.split('|')[2];
+      history = JSON.parse(historyData);
+      guests = JSON.parse(peerData);
+      history.map((x) => {console.log(x); return x;});
+    }
+}
 
 //
 //
