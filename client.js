@@ -36,7 +36,7 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
           //we are host, new guest came
           let guestIp = data.split('|')[2];
           myTopology.add(guestIp+":8125");
-          t.peer(guestIp+":8125").write("hello new guest. I am the host");
+          myTopology.peer(guestIp+":8125").write("hello new guest. I am the host");
         break;
         default:
       }
