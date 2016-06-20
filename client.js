@@ -58,6 +58,7 @@ client.connect({port: 8124, host: serverIp}, function() {
                       return x;
                     });
                     initialized = true;
+                    broadcastAndSave("system> " + myName + " connected");
                     history.map((x) => {console.log(x); return x;});
                   }
                   break;
@@ -126,10 +127,16 @@ var connectToGuests = function(gs) {
 }
 
 rl.on('line', (input) => {
-  history.push(myName + ": " + input);
-  guests.map(x => x.clientSocket.write(myName + ": " + input));
+  if (input == "exit") {
+    guests.map(x => x.clientSocket.end());
+    process.exit();
+  } else {
+    history.push(myName + ": " + input);
+    guests.map(x => x.clientSocket.write(myName + ": " + input));
+  }
 });
 
+// send message to all guests and save it to local history
 var broadcastAndSave = function (message) {
   history.push(message);
   guests.map(x => x.clientSocket.write(message));
@@ -145,6 +152,7 @@ var handleGuestLogic = function (data) {
   let newClientSocket = new net.Socket();
 
   newClientSocket.connect({port: 8125, host: guestIp}, function() {
+    //if we are getting from him this is just chat.
     newClientSocket.on('data',  function(buf) {
       buf = buf.toString();
       console.log(buf);
@@ -163,12 +171,13 @@ var handleGuestLogic = function (data) {
       isHost : true
     });
 
+    // On that guest FIN package remove him from guests array and broadcast he disconnected.
     newClientSocket.on('end', () => {
         console.log("clientSOCKET closed");
         guests = guests.filter((x) => x.guestIp != guestIp);
         broadcastAndSave("system> " + guestName + " disconnected!");
     })
-
+    // flush history and guests and then save him to guests
     newClientSocket.write("historyGuests|"+JSON.stringify(history) + "|" + JSON.stringify(guestsToSend),
     function() {
       //after new guest has history and other guestst record him also
@@ -182,13 +191,13 @@ var handleGuestLogic = function (data) {
   });
 }
 
-
-process.on('SIGINT', function() {
-  console.log('sigint outside');
-  client.end();
-  guests.map(x => x.clientSocket.end());
-  process.exit();
-});
+//attempt to handle of CTRL-C exit. Send FIN request to all Behaves differently on windows and mac :(
+// process.on('SIGINT', function() {
+//   console.log('sigint outside');
+//   client.end();
+//   guests.map(x => x.clientSocket.end());
+//   process.exit();
+// });
 
 
 
