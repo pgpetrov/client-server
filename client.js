@@ -97,6 +97,7 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
 rl.on('line', (input) => {
   if (input == "exit") {
     myTopology.destroy();
+    clientSocket.destroy();
   } else {
     history.push(myName + ": " + input);
     peers.forEach(function(x){
