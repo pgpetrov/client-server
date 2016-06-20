@@ -36,7 +36,10 @@ client.connect({port: 8124, host: serverIp}, function() {
         myIp = data.split('|')[1];
         break;
       case "guest":
+          console.log("I am guest. Ending socket.");
           client.end();
+          client.destroy();
+          console.log("I am guest. Ended");
           // Server says I am guest. Waiting for the host to contact me.
           myIp = data.split('|')[1];
           const clientServer = net.createServer((c) => {

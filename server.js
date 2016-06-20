@@ -85,6 +85,9 @@ var handleHostLogic = function(c) {
             //respond you are host now and send the your ip. will be needed later
             c.write("host|"+guestIp);
           } else {
+            c.on('end', () => {
+              console.log("disconnecting guest "+clientName+" from server.");
+            });
             //guest came for this room
             c.write("guest|"+guestIp);
             rooms[clientRoom].hostSocket.write("newGuest|"+clientName+"|"+guestIp);
@@ -92,8 +95,6 @@ var handleHostLogic = function(c) {
               name : clientName,
               guestIp : guestIp
             });
-            c.end();
-            c.destroy();
           }
         break;
       default:
