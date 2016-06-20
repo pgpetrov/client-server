@@ -43,9 +43,6 @@ client.connect({port: 8124, host: serverIp}, function() {
           // Server says I am guest. Waiting for the host to contact me.
           myIp = data.split('|')[1];
           const clientServer = net.createServer((c) => {
-            c.on('connect', function() {
-              c.ip = c.remoteAddress.split(':')[3];
-            });
             c.on('data', function(buf) {
               buf = buf.toString();
               var inputType = buf.split('|')[0];
@@ -68,7 +65,7 @@ client.connect({port: 8124, host: serverIp}, function() {
                   }
                   break;
                 case "BECOMINGHOST":
-                  let commandComingFromIp = c.ip;
+                  let commandComingFromIp = c.remoteAddress.split(':')[3];;
                   if (commandComingFromIp == serverIp) {
                     //Server connected and promoted me to host.
                     isHost = true;
@@ -87,20 +84,14 @@ client.connect({port: 8124, host: serverIp}, function() {
             });
 
             c.on('end', function() {
-              let endComingFromIp = c.ip;
+              let endComingFromIp = c.remoteAddress.split(':')[3]; //undefined find another way
               let disconnectedName;
               guests = guests.filter((x) => {
-                if (x.guestIp != endComingFromIp) {
-                  return true;
-                } else {
-                  disconnectedName = x.name;
-                  return false;
-                }
+                disconnectedName = x.guestIp == endComingFromIp ? x.name:undefined;
                 return x.guestIp != endComingFromIp;
-
               });
-              console.log("system> " + disconnectedName + " disconnected");
-              history.push("system> " + disconnectedName + " disconnected");
+              console.log("system1> " + disconnectedName + " disconnected");
+              history.push("system1> " + disconnectedName + " disconnected");
 
             });
 
@@ -142,8 +133,8 @@ var connectToGuests = function(gs) {
             guests = guests.filter((y) => {
               return x.guestIp != y.guestIp;
             });
-            console.log("system> " + x.name + " disconnected");
-            history.push("system> " + x.name + " disconnected");
+            console.log("system2> " + x.name + " disconnected");
+            history.push("system2> " + x.name + " disconnected");
         })
         x.clientSocket = xClient;
       });
@@ -200,8 +191,8 @@ var handleGuestLogic = function (data) {
     // On that guest FIN package remove him from guests array and broadcast he disconnected.
     newClientSocket.on('end', () => {
         guests = guests.filter((x) => x.guestIp != guestIp);
-        console.log("system> " + guestName + " disconnected!");
-        history.push("system> " + guestName + " disconnected!");
+        console.log("system3> " + guestName + " disconnected!");
+        history.push("system3> " + guestName + " disconnected!");
         // broadcastAndSave("system> " + guestName + " disconnected!");
     })
     // flush history and guests and then save him to guests
