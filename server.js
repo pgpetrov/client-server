@@ -66,8 +66,8 @@ var handleHostLogic = function(c) {
             c.write("host|"+guestIp);
           } else {
             //guest came for this room
-            c.write("guest|"+guestIp);
-            rooms[clientRoom].hostSocket.write("newGuest|"+clientName+"|"+guestIp);
+            c.write(("guest|"+guestIp), undefined, function() {
+            rooms[clientRoom].hostSocket.write("newGuest|"+clientName+"|"+guestIp)});
             rooms[clientRoom].roomGuests.push({
               name : clientName,
               guestIp : guestIp

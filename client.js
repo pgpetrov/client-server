@@ -24,12 +24,16 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
           history.push("system> " + myName + ' is host');
           isHost = true;
           myIp = data.split('|')[1];
-          myTopology = topology(myIp, []);
-
+          myTopology = topology(myIp+":8125", []);
+          myTopology.on("connection", function(s) {
+            console.log("CONNECTION CAME");
+            s.write("hello new guest. I am the host");
+          });
         break;
         case "guest":
+          console.log("i am guest creating topology");
           myIp = data.split('|')[1];
-          myTopology = topology(myIp, []);
+          myTopology = topology(myIp+":8125", []);
           myTopology.on("connection", function(s) {
             s.on("data", function (data) {
               console.log(data);
@@ -41,9 +45,7 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
           //we are host, new guest came
           let guestIp = data.split('|')[2];
           console.log("adding -> " + guestIp+":8125");
-          myTopology.on("connection", function(s) {
-            s.write("hello new guest. I am the host");
-          });
+          console.log(myTopology);
           myTopology.add(guestIp+":8125");
         break;
         default:
