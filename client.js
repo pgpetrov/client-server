@@ -15,7 +15,6 @@ var myIp;
 var myTopology;
 var history = [];
 var peers = [];
-var isHost = false;
 
 var clientSocket = new net.Socket();
 clientSocket.connect({port: 8124, host: serverIp}, function() {
@@ -29,7 +28,6 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
           // I am host.
           console.log("system> " + myName + ' is host');
           history.push("system> " + myName + ' is host');
-          isHost = true;
           myIp = data.split('|')[1];
           myTopology = topology(myIp+":8125", []);
           myTopology.on("connection", function(s, peer) {
@@ -42,12 +40,17 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
               history.push(data);
               console.log(data);
             });
+            s.on("end", function(){
+              peers.splice(peers.indexOf(peer), 1);
+              history.push("system> "+peer+" disconnected");
+              console.log("system> "+peer+" disconnected");
+            })
           });
         break;
         case "guest":
           myIp = data.split('|')[1];
           myTopology = topology(myIp+":8125", []);
-          myTopology.on("connection", function(s) {
+          myTopology.on("connection", function(s, peer) {
             s.on("data", function (data) {
               data = data.toString();
               var inputType = data.split('|')[0];
@@ -62,6 +65,11 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
                 console.log(data);
               }
             });
+            s.on("end", function(){
+              peers.splice(peers.indexOf(peer), 1);
+              history.push("system> "+peer+" disconnected");
+              console.log("system> "+peer+" disconnected");
+            })
           });
           clientSocket.end();
         break;
@@ -78,12 +86,14 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
 
 
 rl.on('line', (input) => {
-  history.push(myName + ": " + input);
-  console.log(peers);
-  peers.forEach(function(x){
-    console.log("sending to peer " + x);
-    myTopology.peer(x).write(myName + ": " + input)
-  });
+  if (input == "exit") {
+    myTopology.destroy();
+  } else {
+    history.push(myName + ": " + input);
+    peers.forEach(function(x){
+      myTopology.peer(x).write(myName + ": " + input)
+    });
+  }
 });
 
 //
