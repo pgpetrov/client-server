@@ -9,7 +9,8 @@ var roomName = process.argv[3] || "room1";
 var serverIp = process.argv[4] || "192.168.0.97"; //my home network ip
 var myIp;
 var myTopology;
-
+var history = [];
+var isHost = false;
 clientSocket.connect({port: 8124, host: serverIp}, function() {
     // Say we are new client. State name and room.
     clientSocket.write("new|" + myName + "|" + roomName);
