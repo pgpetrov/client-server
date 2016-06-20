@@ -30,13 +30,19 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
         case "guest":
           myIp = data.split('|')[1];
           myTopology = topology(myIp, []);
+          myTopology.on("connection", function(s) {
+            s.on("data", (data) => {console.log(data);});
+          });
           clientSocket.end();
         break;
         case "newGuest":
           //we are host, new guest came
           let guestIp = data.split('|')[2];
+          console.log("adding -> " + guestIp+":8125");
+          myTopology.on("connection", function(s) {
+            s.write("hello new guest. I am the host");
+          });
           myTopology.add(guestIp+":8125");
-          myTopology.peer(guestIp+":8125").write("hello new guest. I am the host");
         break;
         default:
       }
