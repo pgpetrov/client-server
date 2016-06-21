@@ -38,6 +38,7 @@ client.connect({port: 8124, host: serverIp}, function() {
 var setupAsHost = function (data) {
   //expecting host|<myip>
   myIp = data.split('|')[1];
+  broadcast("system> " + myName + " is host");
   server = net.createServer((c) => {
     let comingIp = c.remoteAddress.split(':')[3];
     var comingFromServer = comingIp == serverIp;
@@ -81,6 +82,7 @@ var setupAsGuest = function (data) {
     }
     client.on("data", function(data) {
       data = data.toString();
+      console.log(data);
       var type = data.split('|')[0];
       if (type == "historyPeers") {
           let guestsData = data.split('|')[2];
@@ -125,12 +127,14 @@ var setupAsGuest = function (data) {
 
 
 rl.on('line', (input) => {
-  history.push(myName + ": " + input);
-  peers.forEach(x => x.socket.write(myName + ": " + input));
+  broadcast(myName + ": " + input);
 });
 
 
-
+broadcast(msg){
+  history.push(msg);
+  peers.forEach(x => x.socket.write(msg));
+}
 
 //
 // client.connect({port: 8124, host: serverIp}, function() {
