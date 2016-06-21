@@ -1,72 +1,30 @@
-var topology = require('fully-connected-topology');
-var net = require('net');
+// Hello World client
+// Connects REQ socket to tcp://localhost:5555
+// Sends "Hello" to server.
 
-// var swarm = ["127.0.0.1:4000", "127.0.0.1:4001", "127.0.0.1:4002"];
-//
-// topologySwarm = swarm.map((x, i) => {
-//   let work = swarm.slice();
-//   work.splice(i,1);
-//   return topology(x, work);
-// });
-//
-// topologySwarm.map((x, i) => {x.on("connection", function(connection, peer) {
-//   console.log(i + ' is connected to', peer);
-// })});
-// t1.on('connection', function(connection, peer) {
-//   console.log('t1 is connected to', peer);
-// });
+var zmq = require('zmq');
 
+// socket to talk to server
+console.log("Connecting to hello world server...");
+var requester = zmq.socket('req');
 
-// var t1 = topology('127.0.0.1:4001', ['127.0.0.1:4002', '127.0.0.1:4003']);
-// var t2 = topology('127.0.0.1:4002', ['127.0.0.1:4001', '127.0.0.1:4003']);
-// var t3 = topology('127.0.0.1:4003', ['127.0.0.1:4001', '127.0.0.1:4002']);
-
-// var peers = [];
-// var myIp = "123";
-// var peersAndMe = peers.slice();
-// peersAndMe.push(myIp+":8125");
-// console.log(JSON.stringify(peersAndMe));
-
-var register = require('register-multicast-dns');
-
-
-
-var t1 = topology('peterServer.local:4001', []); //server topology
-var t2 = topology('127.0.0.1:4002', ["peterServer.local:4001"]);
-
-t1.on('connection', function(connection, peer) {
-  console.log('t1 is connected to', peer);
-  connection.write("boza");
-  connection.on("data", function (data){
-    console.log(data.toString());
-  });
+var x = 0;
+requester.on("message", function(reply) {
+  console.log("Received reply", x, ": [", reply.toString(), ']');
+  x += 1;
+  if (x === 10) {
+    requester.close();
+    process.exit(0);
+  }
 });
 
-t2.on('connection', function(connection, peer) {
-  console.log('t2 is connected to', peer);
-  connection.write("boza2");
-  connection.on("data", function (data){
-    console.log(data.toString());
-  });
+requester.connect("tcp://localhost:5555");
+
+for (var i = 0; i < 10; i++) {
+  console.log("Sending request", i, '...');
+  requester.send("Hello");
+}
+
+process.on('SIGINT', function() {
+  requester.close();
 });
-
-// t1.add();
-//
-//
-// var client = new net.Socket();
-//
-// client.connect({port: 4001, host: "127.0.0.1"}, function() {
-//   console.log("connected");
-//   // Tell first guest he is the Host now.
-//   client.write("BECOMINGHOST");
-//   client.on("data", function(data){
-//     console.log(data.toString());
-//   });
-// });
-
-
-
-
-// t3.on('connection', function(connection, peer) {
-//   console.log('t3 is connected to', peer);
-// });

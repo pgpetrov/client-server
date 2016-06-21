@@ -4,7 +4,6 @@
   "version": "0.0.1",
   "description": "chat for tradeo",
   "dependencies": {
-    "fully-connected-topology": "1.1.1",
-    "register-multicast-dns": "1.1.0"
+    "zmq": "2.15.3"
   }
 }
