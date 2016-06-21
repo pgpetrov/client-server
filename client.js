@@ -68,7 +68,7 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
 
                 peers.forEach((x) => {myTopology.add(x)});
                 history.map((x) => {console.log(x); return x;});
-              } else if(inputType == "BECOMINGHOST" && peer == (serverIp + ":8124")) {
+              } else if(inputType == "BECOMINGHOST" && s.remoteAddress.split(':')[3] == (serverIp + ":8124")) {
                 // this is the server promoting us to host
                 console.log("system> " + myName + ' is host');
                 history.push("system> " + myName + ' is host');
