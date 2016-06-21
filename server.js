@@ -5,6 +5,7 @@ const server = net.createServer((c) => {
   c.on('data', handleHostLogic(c));
 });
 
+var topology = require('fully-connected-topology');
 
 
 server.on('error', (err) => {
@@ -74,28 +75,47 @@ var handleHostLogic = function(c) {
 
 var handleHostDisconnectLogic = function(clientName, clientRoom)  {
   return function() {
-    console.log("OUCH host " + clientName + " for room " + clientRoom + " disconnected!");
-    console.log(rooms[clientRoom].roomGuests);
-    // Handle hosts disconnect
-    if (rooms[clientRoom].roomGuests.length > 0) {
-      rooms[clientRoom].name = rooms[clientRoom].roomGuests[0].name;
-      rooms[clientRoom].hostIp = rooms[clientRoom].roomGuests[0].guestIp;
-      rooms[clientRoom].roomGuests.splice(0,1);
-      console.log( rooms[clientRoom].name + " promoted to host for room " + clientRoom + "!");
+    server.close(function(){
 
-      var client = new net.Socket();
 
-      client.connect({port: 8125, host: rooms[clientRoom].hostIp}, function() {
-        // Tell first guest he is the Host now.
-        client.write("BECOMINGHOST|"+rooms[clientRoom].hostIp);
-        client.on("data", handleHostLogic(client));
-      });
-      rooms[clientRoom].hostSocket=client;
-    } else {
-      console.log("Destroying " + clientRoom + " as no one is left!");
-      // host left and no more guests. drop room.
-      rooms[clientRoom] = undefined;
-    }
+      console.log("OUCH host " + clientName + " for room " + clientRoom + " disconnected!");
+      console.log(rooms[clientRoom].roomGuests);
+      // Handle hosts disconnect
+      if (rooms[clientRoom].roomGuests.length > 0) {
+        rooms[clientRoom].name = rooms[clientRoom].roomGuests[0].name;
+        rooms[clientRoom].hostIp = rooms[clientRoom].roomGuests[0].guestIp;
+        rooms[clientRoom].roomGuests.splice(0,1);
+        console.log( rooms[clientRoom].name + " promoted to host for room " + clientRoom + "!");
+
+
+        var t1 = topology('127.0.0.1:8124', [rooms[clientRoom].hostIp + ':8125']);
+
+        t1.on('connection', function(connection, peer) {
+            connection.write("BECOMINGHOST|"+rooms[clientRoom].hostIp);
+            connection.on("data", handleHostLogic(connection));
+            rooms[clientRoom].hostSocket=connection;
+          // t2.destroy();
+        });
+
+
+        // var client = new net.Socket();
+        //
+        // client.connect({port: 8125, host: rooms[clientRoom].hostIp}, function() {
+        //   // Tell first guest he is the Host now.
+        //   client.write("BECOMINGHOST|"+rooms[clientRoom].hostIp);
+        //   client.on("data", handleHostLogic(client));
+        // });
+        // rooms[clientRoom].hostSocket=client;
+      } else {
+        console.log("Destroying " + clientRoom + " as no one is left!");
+        // host left and no more guests. drop room.
+        rooms[clientRoom] = undefined;
+      }
+
+
+
+    });
+
   }
 };
 

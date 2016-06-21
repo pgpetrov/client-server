@@ -15,8 +15,10 @@ var myIp;
 var myTopology;
 var history = [];
 var peers = [];
-
+var isHost = false;
 var clientSocket = new net.Socket();
+
+
 clientSocket.connect({port: 8124, host: serverIp}, function() {
     // Say we are new client. State name and room.
     clientSocket.write("new|" + myName + "|" + roomName);
@@ -26,6 +28,7 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
       switch (type) {
         case "host":
           // I am host.
+          isHost = true;
           console.log("system> " + myName + ' is host');
           history.push("system> " + myName + ' is host');
           myIp = data.split('|')[1];
@@ -54,6 +57,8 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
           myIp = data.split('|')[1];
           myTopology = topology(myIp+":8125", []);
           myTopology.on("connection", function(s, peer) {
+            //TODO maybe we should not push the server here
+            peers.push(peer);
             s.on("data", function (data) {
               data = data.toString();
               var inputType = data.split('|')[0];
@@ -63,6 +68,17 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
 
                 peers.forEach((x) => {myTopology.add(x)});
                 history.map((x) => {console.log(x); return x;});
+              } else if(inputType == "BECOMINGHOST" && peer == (serverIp + ":8124")) {
+                // this is the server promoting us to host
+                console.log("system> " + myName + ' is host');
+                history.push("system> " + myName + ' is host');
+                isHost = true;
+                peers.forEach(function(x){
+                  myTopology.peer(x).write("system> " + myName + " is host")
+                });
+              } else if (isHost && inputType=="newGuest") {
+                //we are the new host and we must take care of the new guests
+                handleGuestLogic(data);
               } else {
                 history.push(data);
                 console.log(data);
@@ -78,20 +94,25 @@ clientSocket.connect({port: 8124, host: serverIp}, function() {
         break;
         case "newGuest":
           //we are host, new guest came
-          let guestName = data.split('|')[1];
-          history.push("system> " + guestName + " connected");
-          console.log("system> " + guestName + " connected");
-          peers.forEach(function(x){
-            myTopology.peer(x).write(myName + ": " + input)
-          });
-          let guestIp = data.split('|')[2];
-          myTopology.add(guestIp+":8125");
+          handleGuestLogic(data);
         break;
         default:
       }
     });
 });
 
+var handleGuestLogic = function (data) {
+  //we are host, new guest came
+  let guestName = data.split('|')[1];
+  history.push("system> " + guestName + " connected");
+  console.log("system> " + guestName + " connected");
+  peers.forEach(function(x){
+    myTopology.peer(x).write("system> " + guestName + " connected")
+  });
+  let guestIp = data.split('|')[2];
+  myTopology.add(guestIp+":8125");
+
+}
 
 
 rl.on('line', (input) => {
