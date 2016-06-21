@@ -9,7 +9,7 @@ const rl = readline.createInterface({
 var myName = process.argv[2];
 var roomName = process.argv[3] || "room1";
 var serverIp = process.argv[4] || "192.168.0.97"; //my home network ip
-var peers = [];
+var peers = {};
 var history = [];
 var myIp;
 var server;
@@ -88,7 +88,10 @@ var setupAsGuest = function (data) {
       if (type == "historyPeers") {
           let guestsData = data.split('|')[2];
           history = JSON.parse(data.split('|')[1]);
-          peers = peers.concat(JSON.parse(data.split('|')[2]));
+          let comingPeers = JSON.parse(data.split('|')[2]);
+          Object.keys(comingPeers).forEach(function(key, idx) {
+            peers[key] = comingPeers[key];
+          });
           history.map((x) => {console.log(x); return x;});
       } else {
         console.log(data);
@@ -134,7 +137,9 @@ rl.on('line', (input) => {
 
 var broadcast = function (msg){
   history.push(msg);
-  peers.forEach(x => x.socket.write(msg));
+  Object.keys(peers).forEach(function(key, idx) {
+    peers[key].socket.write(msg);
+  });
 }
 
 //

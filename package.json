@@ -4,6 +4,5 @@
   "version": "0.0.1",
   "description": "chat for tradeo",
   "dependencies": {
-    "co": "4.6.0"
   }
 }
