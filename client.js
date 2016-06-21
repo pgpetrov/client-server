@@ -75,13 +75,17 @@ var setupAsGuest = function (data) {
 
   client.connect({port: 8125, host: hostIp}, function() {
     // client.write("myNameIs|" + myName);
+    peers[hostIp] = {
+      name : "unknown",
+      socket : client
+    }
     client.on("data", function(data) {
       data = data.toString();
       var type = data.split('|')[0];
       if (type == "historyPeers") {
           let guestsData = data.split('|')[2];
           history = JSON.parse(data.split('|')[1]);
-          guests = JSON.parse(data.split('|')[2]);
+          peers = peers.concat(JSON.parse(data.split('|')[2]));
           history.map((x) => {console.log(x); return x;});
       } else {
         console.log(data);
