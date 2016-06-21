@@ -1,10 +1,59 @@
 "use strict";
 const net = require('net');
 var rooms = {};
+var clientToHost = new net.Socket();
 const server = net.createServer((c) => {
-  c.on('data', handleHostLogic(c));
+  c.on('data', function(buf) {
+    buf = buf.toString();
+    console.log("server incoming -> " + buf);
+    var type = buf.split('|')[0];
+    //type|name|clientRoom
+    switch (type) {
+      case "new":
+          let clientName = buf.split('|')[1];
+          let clientRoom = buf.split('|')[2];
+          let guestIp = c.remoteAddress.split(':')[3];
+          if (!rooms[clientRoom]) {
+            //respond you are host now and send the your ip. will be needed later
+            c.write(("host|"+guestIp), function() {c.destroy()});
+            setTimeout(function(){
+              clientToHost.connect({port: 8125, host: guestIp}, function() {
+                console.log("connected to host");
+                rooms[clientRoom] = {
+                  name : clientName,
+                  hostIp : guestIp,
+                  hostSocket : clientToHost,
+                  roomGuests : []
+                };
+
+                clientToHost.on("end", function(){
+                  //TODO handle host disconnect
+                });
+              })
+
+            }, 1000);
+
+          } else {
+            //guest came for this room. Send him the host ip.
+            rooms[clientRoom].roomGuests.push({
+              name : clientName,
+              guestIp : guestIp
+            });
+            c.write("guest|"+rooms[clientRoom].hostIp, function() {c.destroy()});
+
+          }
+        break;
+      default:
+    }
+  });
 });
 
+server.on('error', (err) => {
+  throw err;
+});
+server.listen(8124, () => {
+  console.log('server bound');
+});
 
 
 // for (var room in rooms) {
@@ -28,12 +77,6 @@ const server = net.createServer((c) => {
 // }
 
 
-server.on('error', (err) => {
-  throw err;
-});
-server.listen(8124, () => {
-  console.log('server bound');
-});
 
 
 var handleHostLogic = function(c) {

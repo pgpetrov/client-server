@@ -1,49 +1,166 @@
 "use strict";
 
-var ClientHost = require('./clientHost');
-var ClientGuest = require('./clientHost');
-var net = require('net');
-var client = new net.Socket();
+var readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
 var myName = process.argv[2];
 var roomName = process.argv[3] || "room1";
 var serverIp = process.argv[4] || "192.168.0.97"; //my home network ip
+var peers = [];
+var history = [];
+var myIp;
+var server;
 
-var customer;
-
+var net = require('net');
+var client = new net.Socket();
 client.connect({port: 8124, host: serverIp}, function() {
-    // Say we are new client. State name and room.
-    client.write("new|" + myName + "|" + roomName);
-    client.on('data', function(data) {
+  // Say we are new client. State name and room.
+  client.write("new|" + myName + "|" + roomName);
+  client.on('data', function(data) {
+    data = data.toString();
+    var type = data.split('|')[0];
+    switch (type) {
+      case "host":
+        setupAsHost(data);
+        break;
+      case "guest":
+        setupAsGuest(data);
+        break;
+      default:
+    }
+  });
+});
+
+
+var setupAsHost = function (data) {
+  //expecting host|<myip>
+  myIp = data.split('|')[1];
+  server = net.createServer((c) => {
+    let comingIp = c.remoteAddress.split(':')[3];
+    var comingFromServer = comingIp == serverIp;
+    if (!comingFromServer) {
+      peers[comingIp] = {
+        name : "unknown",
+        socket : c
+      };
+      c.write("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(peers));
+    }
+
+    c.on('data', function(data){
+      data = data.toString();
+      if (comingFromServer) {
+        //handle server - host communication
+      } else {
+        // var type = data.split("|")[0];
+        // if (type == "myNameIs") {
+        //   peers[comingIp].name = data.split("|")[1];
+        // }
+        //Guest sending data
+        console.log(data);
+        history.push(data);
+      }
+    });
+  });
+  server.listen(8125);
+}
+
+var setupAsGuest = function (data) {
+  // expecting guest|<hostip>
+  client.destroy();
+  client = new net.Socket();
+  var hostIp = data.split('|')[1];
+
+  client.connect({port: 8125, host: hostIp}, function() {
+    // client.write("myNameIs|" + myName);
+    client.on("data", function(data) {
       data = data.toString();
       var type = data.split('|')[0];
-      switch (type) {
-        case "host":
-          // I am host.
-          customer = new ClientHost({
-            name : myName,
-            ip : data.split('|')[1],
-            room : roomName,
-            serverSocket : client,
-            history : ["system> " + myName + ' is host'],
-            guests : []
-          });
-          break;
-          case "guest":
-            // I am guest.
-            customer = new ClientGuest({
-              name : myName,
-              ip : data.split('|')[1],
-              room : roomName,
-              history : [],
-              guests : []
-            });
-          break;
-        default:
+      if (type == "historyPeers") {
+          let guestsData = data.split('|')[2];
+          history = JSON.parse(data.split('|')[1]);
+          guests = JSON.parse(data.split('|')[2]);
+          history.map((x) => {console.log(x); return x;});
+      } else {
+        console.log(data);
+        history.push(data);
       }
-      customer.listen();
     });
+  });
+
+  server = net.createServer((c) => {
+    let comingIp = c.remoteAddress.split(':')[3];
+    var comingFromServer = comingIp == serverIp;
+    if (!comingFromServer) {
+      peers[comingIp] = {
+        name : "unknown",
+        socket : c
+      };
+    }
+
+    c.on('data', function(data){
+      data = data.toString();
+      if (comingFromServer) {
+        //handle server - host communication
+      } else {
+        // var type = data.split("|")[0];
+        // if (type == "myNameIs") {
+        //   peers[comingIp].name = data.split("|")[1];
+        // }
+        //Guest sending data
+        console.log(data);
+        history.push(data);
+      }
+    });
+  });
+}
+
+
+
+rl.on('line', (input) => {
+  history.push(myName + ": " + input);
+  peers.forEach(x => x.socket.write(myName + ": " + input));
 });
+
+
+
+
+//
+// client.connect({port: 8124, host: serverIp}, function() {
+//     // Say we are new client. State name and room.
+//     client.write("new|" + myName + "|" + roomName);
+//     client.on('data', function(data) {
+//       data = data.toString();
+//       var type = data.split('|')[0];
+//       switch (type) {
+//         case "host":
+//           // I am host.
+//           customer = new ClientHost({
+//             name : myName,
+//             ip : data.split('|')[1],
+//             room : roomName,
+//             serverSocket : client,
+//             history : ["system> " + myName + ' is host'],
+//             guests : []
+//           });
+//           break;
+//           case "guest":
+//             // I am guest.
+//             customer = new ClientGuest({
+//               name : myName,
+//               ip : data.split('|')[1],
+//               room : roomName,
+//               history : [],
+//               guests : []
+//             });
+//           break;
+//         default:
+//       }
+//       customer.listen();
+//     });
+// });
 
 
 //
