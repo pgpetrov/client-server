@@ -115,6 +115,7 @@ var setupAsGuest = function (data) {
       }
     });
   });
+  server.listen(8125);
 }
 
 
