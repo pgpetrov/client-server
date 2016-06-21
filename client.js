@@ -38,6 +38,7 @@ client.connect({port: 8124, host: serverIp}, function() {
 var setupAsHost = function (data) {
   //expecting host|<myip>
   myIp = data.split('|')[1];
+  console.log("system> " + myName + " is host");
   broadcast("system> " + myName + " is host");
   server = net.createServer((c) => {
     let comingIp = c.remoteAddress.split(':')[3];
