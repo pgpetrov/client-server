@@ -131,7 +131,7 @@ rl.on('line', (input) => {
 });
 
 
-broadcast = function (msg){
+var broadcast = function (msg){
   history.push(msg);
   peers.forEach(x => x.socket.write(msg));
 }
