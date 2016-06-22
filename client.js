@@ -51,7 +51,6 @@ server = net.createServer((c) => {
 
   c.on('data', function(data){
     data = data.toString();
-    console.log(data);
     var type = data.split('|')[0];
     switch (type) {
       case "newGuest":
@@ -71,8 +70,8 @@ server = net.createServer((c) => {
               console.log("system> "+guestIp+" disconnected");
               broadcast("system> "+guestIp+" disconnected");
             });
+            peers[guestIp] = {clientSocket : guestSocket};
           });
-          peers[guestIp] = {clientSocket : guestSocket};
         }
         break;
       case "historyPeers":
@@ -108,7 +107,7 @@ rl.on('line', (input) => {
 var broadcast = function (msg){
   history.push(msg);
   Object.keys(peers).forEach(function(key, idx) {
-    peers[key].clientSocket.write(msg+'\n');
+    peers[key].clientSocket.write(msg);
   });
 }
 

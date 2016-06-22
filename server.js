@@ -1,7 +1,7 @@
 "use strict";
 const net = require('net');
 var rooms = {};
-var clientToHost = new net.Socket();
+var clientToHost;
 const server = net.createServer((c) => {
   c.on('data', function(buf) {
     buf = buf.toString();
@@ -16,51 +16,43 @@ const server = net.createServer((c) => {
           if (!rooms[clientRoom]) {
             //respond you are host now and send the your ip. will be needed later
             c.write(("host|"+guestIp), function() {c.destroy()});
-            setTimeout(function(){
-              clientToHost.connect({port: 8125, host: guestIp}, function() {
-                console.log("connected to host");
-                rooms[clientRoom] = {
-                  name : clientName,
-                  hostIp : guestIp,
-                  hostSocket : clientToHost,
-                  roomGuests : []
-                };
+            clientToHost = new net.Socket();
+            clientToHost.connect({port: 8125, host: guestIp}, function() {
+              console.log("connected to host");
+              rooms[clientRoom] = {
+                name : clientName,
+                hostIp : guestIp,
+                hostSocket : clientToHost,
+                roomGuests : []
+              };
 
-                clientToHost.on("end", function(){
+              clientToHost.on("end", function() {
+                console.log("OUCH host " + clientName + " for room " + clientRoom + " disconnected!");
+                console.log(rooms[clientRoom].roomGuests);
+                // Handle hosts disconnect
+                if (rooms[clientRoom].roomGuests.length > 0) {
+                  rooms[clientRoom].name = rooms[clientRoom].roomGuests[0].name;
+                  rooms[clientRoom].hostIp = rooms[clientRoom].roomGuests[0].guestIp;
+                  rooms[clientRoom].roomGuests.splice(0,1);
+                  console.log( rooms[clientRoom].name + " promoted to host for room " + clientRoom + "!");
 
+                  var client = new net.Socket();
 
-                        console.log("OUCH host " + clientName + " for room " + clientRoom + " disconnected!");
-                        console.log(rooms[clientRoom].roomGuests);
-                        // Handle hosts disconnect
-                        if (rooms[clientRoom].roomGuests.length > 0) {
-                          rooms[clientRoom].name = rooms[clientRoom].roomGuests[0].name;
-                          rooms[clientRoom].hostIp = rooms[clientRoom].roomGuests[0].guestIp;
-                          rooms[clientRoom].roomGuests.splice(0,1);
-                          console.log( rooms[clientRoom].name + " promoted to host for room " + clientRoom + "!");
+                  client.connect({port: 8125, host: rooms[clientRoom].hostIp}, function() {
+                    // Tell first guest he is the Host now.
+                    client.write("BECOMINGHOST|"+rooms[clientRoom].hostIp);
+                    // client.on("data", handleHostLogic(client));
+                  });
+                  rooms[clientRoom].hostSocket=client;
+                } else {
+                  console.log("Destroying " + clientRoom + " as no one is left!");
+                  // host left and no more guests. drop room.
+                  rooms[clientRoom] = undefined;
+                }
+                //TODO handle host disconnect
+              });
+            })
 
-                          var client = new net.Socket();
-
-                          client.connect({port: 8125, host: rooms[clientRoom].hostIp}, function() {
-                            // Tell first guest he is the Host now.
-                            client.write("BECOMINGHOST|"+rooms[clientRoom].hostIp);
-                            // client.on("data", handleHostLogic(client));
-                          });
-                          rooms[clientRoom].hostSocket=client;
-                        } else {
-                          console.log("Destroying " + clientRoom + " as no one is left!");
-                          // host left and no more guests. drop room.
-                          rooms[clientRoom] = undefined;
-                        }
-
-
-
-
-
-                  //TODO handle host disconnect
-                });
-              })
-
-            }, 1000);
 
           } else {
             //guest came for this room. Send him the host ip.
