@@ -56,6 +56,8 @@ server = net.createServer((c) => {
           guestSocket.connect({port: 8125, host: guestIp}, function() {
             guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))));
             guestSocket.on("end", function(){
+              delete peers[guestIp];
+              console.log("system> "+guestIp+" disconnected");
               broadcast("system> "+guestIp+" disconnected");
             });
             guestSocket.on("data", function(data){
