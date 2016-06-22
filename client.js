@@ -79,6 +79,12 @@ server = net.createServer((c) => {
         history.push(data);
     }
   });
+
+  c.on("end", function(){
+    delete peers[comingIp];
+    // console.log("system> "+guestIp+" disconnected");
+    // broadcast("system> "+guestIp+" disconnected");
+  });
 });
 server.listen(8125);
 
