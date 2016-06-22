@@ -58,6 +58,11 @@ server = net.createServer((c) => {
             guestSocket.on("end", function(){
               broadcast("system> "+guestIp+" disconnected");
             });
+            guestSocket.on("data", function(data){
+              data = data.toString();
+              console.log(data);
+              history.push(data);
+            })
             peers[guestIp] = {socket : guestSocket};
           });
         }

@@ -43,7 +43,7 @@ const server = net.createServer((c) => {
                           client.connect({port: 8125, host: rooms[clientRoom].hostIp}, function() {
                             // Tell first guest he is the Host now.
                             client.write("BECOMINGHOST|"+rooms[clientRoom].hostIp);
-                            client.on("data", handleHostLogic(client));
+                            // client.on("data", handleHostLogic(client));
                           });
                           rooms[clientRoom].hostSocket=client;
                         } else {
