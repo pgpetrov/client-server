@@ -44,6 +44,10 @@ client.connect({port: 8124, host: serverIp}, function() {
 server = net.createServer((c) => {
   let comingIp = c.remoteAddress.split(':')[3];
   var comingFromServer = comingIp == serverIp;
+  if(!comingFromServer) {
+    // we have new connection not coming from the server. Record it.
+    peers[comingIp] = {socket : c};
+  }
 
   c.on('data', function(data){
     data = data.toString();
@@ -54,7 +58,11 @@ server = net.createServer((c) => {
           let guestIp = data.split('|')[1];
           let guestSocket = new net.Socket();
           guestSocket.connect({port: 8125, host: guestIp}, function() {
-            guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))));
+            //send all peers till now.
+            guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))),
+            function(){
+              peers[comingIp] = {socket : c};
+            });
             guestSocket.on("end", function(){
               delete peers[guestIp];
               console.log("system> "+guestIp+" disconnected");
@@ -72,7 +80,6 @@ server = net.createServer((c) => {
       case "historyPeers":
         populateAndPrintHistory(JSON.parse(data.split('|')[1]));
         populateAndConnectToAllPeers(JSON.parse(data.split('|')[2]));
-        peers[comingIp] = {socket : c};
         break;
       default:
         console.log(data);
@@ -112,7 +119,7 @@ var populateAndPrintHistory = function(h){
     history.forEach((x) => {console.log(x)});
 }
 
-var populateAndConnectToAllPeers = function(ipArray) {
+var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
   ipArray.forEach(function(x) {
     let s = new net.Socket();
     s.connect({port: 8125, host: x}, function() {
