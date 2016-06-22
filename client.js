@@ -108,6 +108,7 @@ rl.on('line', (input) => {
 
 
 var broadcast = function (msg){
+  console.log(Object.keys(peers));
   history.push(msg);
   Object.keys(peers).forEach(function(key, idx) {
     peers[key].socket.write(msg);
