@@ -51,6 +51,9 @@ server = net.createServer((c) => {
 
   c.on('data', function(data){
     data = data.toString();
+    console.log("------");
+    console.log(data);
+    console.log("------");
     var type = data.split('|')[0];
     switch (type) {
       case "newGuest":
