@@ -61,7 +61,7 @@ server = net.createServer((c) => {
             //send all peers till now.
             guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))),
             function(){
-              peers[comingIp] = {socket : guestSocket};
+              peers[guestIp] = {socket : guestSocket};
             });
             guestSocket.on("end", function(){
               delete peers[guestIp];
@@ -73,7 +73,7 @@ server = net.createServer((c) => {
               console.log(data);
               history.push(data);
             })
-            peers[guestIp] = {socket : guestSocket};
+            // peers[guestIp] = {socket : guestSocket};
           });
         }
         break;
