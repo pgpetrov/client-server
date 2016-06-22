@@ -1,30 +1,63 @@
-// Hello World client
-// Connects REQ socket to tcp://localhost:5555
-// Sends "Hello" to server.
+/*
+ *
+ * Publisher subscriber pattern
+ *
+ */
 
-var zmq = require('zmq');
+var cluster = require('cluster')
+  , zmq = require('zmq')
+  , port = 'tcp://127.0.0.1:12345';
 
-// socket to talk to server
-console.log("Connecting to hello world server...");
-var requester = zmq.socket('req');
+if (cluster.isMaster) {
+  for (var i = 0; i < 2; i++) cluster.fork();
 
-var x = 0;
-requester.on("message", function(reply) {
-  console.log("Received reply", x, ": [", reply.toString(), ']');
-  x += 1;
-  if (x === 10) {
-    requester.close();
-    process.exit(0);
-  }
-});
+  cluster.on('death', function(worker) {
+    console.log('worker ' + worker.pid + ' died');
+  });
 
-requester.connect("tcp://localhost:5555");
+  //publisher = send only
 
-for (var i = 0; i < 10; i++) {
-  console.log("Sending request", i, '...');
-  requester.send("Hello");
+  var socket = zmq.socket('pub');
+
+  socket.identity = 'publisher' + process.pid;
+
+  var stocks = ['AAPL', 'GOOG', 'YHOO', 'MSFT', 'INTC'];
+
+  socket.on("connect", function(s){
+    console.log("connection came");
+  });
+
+  socket.on("accept", function(s){
+    console.log("accept");
+  });
+
+  socket.bind(port, function(err) {
+    if (err) throw err;
+    console.log('bound!');
+
+    setInterval(function() {
+      var symbol = stocks[Math.floor(Math.random()*stocks.length)]
+        , value = Math.random()*1000;
+
+      console.log(socket.identity + ': sent ' + symbol + ' ' + value);
+      socket.send(symbol + ' ' + value);
+    }, 100);
+  });
+} else {
+  //subscriber = receive only
+
+  var socket = zmq.socket('sub');
+
+  socket.identity = 'subscriber' + process.pid;
+
+  socket.connect(port);
+
+  socket.subscribe('AAPL');
+  socket.subscribe('GOOG');
+
+  console.log('connected!');
+
+  socket.on('message', function(data) {
+    console.log(socket.identity + ': received data ' + data.toString());
+  });
 }
-
-process.on('SIGINT', function() {
-  requester.close();
-});
