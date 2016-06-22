@@ -44,11 +44,11 @@ var setupAsHost = function (data) {
     let comingIp = c.remoteAddress.split(':')[3];
     var comingFromServer = comingIp == serverIp;
     if (!comingFromServer) {
+      c.write("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers)));
       peers[comingIp] = {
-        name : "unknown",
+        // name : "unknown",
         socket : c
       };
-      c.write("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(peers));
     }
 
     c.on('data', function(data){
@@ -78,7 +78,7 @@ var setupAsGuest = function (data) {
   client.connect({port: 8125, host: hostIp}, function() {
     // client.write("myNameIs|" + myName);
     peers[hostIp] = {
-      name : "unknown",
+      // name : "unknown",
       socket : client
     }
     client.on("data", function(data) {
@@ -88,11 +88,9 @@ var setupAsGuest = function (data) {
       if (type == "historyPeers") {
           let guestsData = data.split('|')[2];
           history = JSON.parse(data.split('|')[1]);
-          let comingPeers = JSON.parse(data.split('|')[2]);
-          Object.keys(comingPeers).forEach(function(key, idx) {
-            peers[key] = comingPeers[key];
-          });
+          JSON.parse(data.split('|')[2]).forEach((x) => {peers[key] = {}});
           history.map((x) => {console.log(x); return x;});
+          connectToAllPeers)();
       } else {
         console.log(data);
         history.push(data);
@@ -137,6 +135,12 @@ rl.on('line', (input) => {
 
 var broadcast = function (msg){
   history.push(msg);
+  Object.keys(peers).forEach(function(key, idx) {
+    peers[key].socket.write(msg);
+  });
+}
+
+var connectToAllPeers = function() {
   Object.keys(peers).forEach(function(key, idx) {
     peers[key].socket.write(msg);
   });
