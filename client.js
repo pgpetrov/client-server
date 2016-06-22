@@ -82,7 +82,13 @@ server.listen(8125);
 
 
 rl.on('line', (input) => {
-  broadcast(myName + ": " + input);
+  if (input == "exit") {
+    Object.keys(peers).forEach(function(key, idx) {
+      peers[key].socket.end();
+    });
+  } else {
+    broadcast(myName + ": " + input);
+  }
 });
 
 
