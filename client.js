@@ -65,6 +65,7 @@ server = net.createServer((c) => {
       case "historyPeers":
         populateAndPrintHistory(JSON.parse(data.split('|')[1]));
         populateAndConnectToAllPeers(JSON.parse(data.split('|')[2]));
+        peers[comingIp] = {socket : c};
         break;
       default:
         console.log(data);
