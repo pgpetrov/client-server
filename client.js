@@ -46,35 +46,33 @@ server = net.createServer((c) => {
   var comingFromServer = comingIp == serverIp;
   // if(!comingFromServer) {
     // we have new connection not coming from the server. Record it.
-    peers[comingIp] = {socket : c};
+    peers[comingIp] = {clientSocket : c};
   // }
 
   c.on('data', function(data){
     data = data.toString();
+    console.log(data);
     var type = data.split('|')[0];
     switch (type) {
       case "newGuest":
         if (comingFromServer) {
-          let guestIp = data.split('|')[1];
-          let guestSocket = new net.Socket();
+          var guestIp = data.split('|')[1];
+          var guestSocket = new net.Socket();
           guestSocket.connect({port: 8125, host: guestIp}, function() {
             //send all peers till now.
-            guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))),
-            function(){
-              peers[guestIp] = {socket : guestSocket};
+            guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))));
+            guestSocket.on("data", function(data){
+              data = data.toString();
+              console.log(data);
+              history.push(data);
             });
             guestSocket.on("end", function(){
               delete peers[guestIp];
               console.log("system> "+guestIp+" disconnected");
               broadcast("system> "+guestIp+" disconnected");
             });
-            guestSocket.on("data", function(data){
-              data = data.toString();
-              console.log(data);
-              history.push(data);
-            })
-            // peers[guestIp] = {socket : guestSocket};
           });
+          peers[guestIp] = {clientSocket : guestSocket};
         }
         break;
       case "historyPeers":
@@ -99,7 +97,7 @@ server.listen(8125);
 rl.on('line', (input) => {
   if (input == "exit") {
     Object.keys(peers).forEach(function(key, idx) {
-      peers[key].socket.end();
+      peers[key].clientSocket.end();
     });
   } else {
     broadcast(myName + ": " + input);
@@ -108,10 +106,9 @@ rl.on('line', (input) => {
 
 
 var broadcast = function (msg){
-  console.log(Object.keys(peers));
   history.push(msg);
   Object.keys(peers).forEach(function(key, idx) {
-    peers[key].socket.write(msg);
+    peers[key].clientSocket.write(msg+'\n');
   });
 }
 
@@ -124,7 +121,7 @@ var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
   ipArray.forEach(function(x) {
     let s = new net.Socket();
     s.connect({port: 8125, host: x}, function() {
-      peers[x] = {socket : s};
+      peers[x] = {clientSocket : s};
       s.on("end", function(){
         broadcast("system> "+x+" disconnected");
       });

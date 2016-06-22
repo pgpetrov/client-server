@@ -74,6 +74,7 @@ const server = net.createServer((c) => {
           }
         break;
       default:
+      console.log(buf);
     }
   });
 });
