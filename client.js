@@ -8,124 +8,71 @@ const rl = readline.createInterface({
 
 var myName = process.argv[2];
 var roomName = process.argv[3] || "room1";
-var serverIp = process.argv[4] || "192.168.0.97"; //my home network ip
+var serverIp = process.argv[4] || "172.30.50.78";//"192.168.0.97"; //my home network ip
 var peers = {};
 var history = [];
 var myIp;
 var server;
+var isHost;
 
 var net = require('net');
 var client = new net.Socket();
 client.connect({port: 8124, host: serverIp}, function() {
   // Say we are new client. State name and room.
   client.write("new|" + myName + "|" + roomName);
+  // Let's implement this as if we con't know what we are
   client.on('data', function(data) {
     data = data.toString();
     var type = data.split('|')[0];
+    myIp = data.split('|')[1];
     switch (type) {
       case "host":
-        setupAsHost(data);
+        console.log("system> " + myName + " is host");
+        broadcast("system> " + myName + " is host");
         break;
       case "guest":
-        setupAsGuest(data);
+        //we do nothing here. Server will notify the host about us.
         break;
       default:
     }
+    client.end();
+    client.destroy();
   });
 });
 
 
-var setupAsHost = function (data) {
-  //expecting host|<myip>
-  myIp = data.split('|')[1];
-  console.log("system> " + myName + " is host");
-  broadcast("system> " + myName + " is host");
-  server = net.createServer((c) => {
-    let comingIp = c.remoteAddress.split(':')[3];
-    var comingFromServer = comingIp == serverIp;
-    if (!comingFromServer) {
-      c.write("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers)));
-      peers[comingIp] = {
-        // name : "unknown",
-        socket : c
-      };
-    }
+server = net.createServer((c) => {
+  let comingIp = c.remoteAddress.split(':')[3];
+  var comingFromServer = comingIp == serverIp;
 
-    c.on('data', function(data){
-      data = data.toString();
-      if (comingFromServer) {
-        //handle server - host communication
-      } else {
-        // var type = data.split("|")[0];
-        // if (type == "myNameIs") {
-        //   peers[comingIp].name = data.split("|")[1];
-        // }
-        //Guest sending data
+  c.on('data', function(data){
+    data = data.toString();
+    var type = data.split('|')[0];
+    switch (type) {
+      case "newGuest":
+        if (comingFromServer) {
+          let guestIp = data.split('|')[1];
+          let guestSocket = new net.Socket();
+          guestSocket.connect({port: 8125, host: guestIp}, function() {
+            guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))));
+            guestSocket.on("end", function(){
+              broadcast("system> "+guestIp+" disconnected");
+            });
+            peers[guestIp] = {socket : guestSocket};
+          });
+        }
+        break;
+      case "historyPeers":
+        populateAndPrintHistory(JSON.parse(data.split('|')[1]));
+        populateAndConnectToAllPeers(JSON.parse(data.split('|')[2]));
+        break;
+      default:
         console.log(data);
         history.push(data);
-      }
-    });
-  });
-  server.listen(8125);
-}
-
-var setupAsGuest = function (data) {
-  // expecting guest|<hostip>
-  client.destroy();
-  client = new net.Socket();
-  var hostIp = data.split('|')[1];
-
-  client.connect({port: 8125, host: hostIp}, function() {
-    // client.write("myNameIs|" + myName);
-    peers[hostIp] = {
-      // name : "unknown",
-      socket : client
     }
-    client.on("data", function(data) {
-      data = data.toString();
-      console.log(data);
-      var type = data.split('|')[0];
-      if (type == "historyPeers") {
-          let guestsData = data.split('|')[2];
-          history = JSON.parse(data.split('|')[1]);
-          JSON.parse(data.split('|')[2]).forEach((x) => {peers[key] = {}});
-          history.map((x) => {console.log(x); return x;});
-          connectToAllPeers)();
-      } else {
-        console.log(data);
-        history.push(data);
-      }
-    });
   });
-
-  server = net.createServer((c) => {
-    let comingIp = c.remoteAddress.split(':')[3];
-    var comingFromServer = comingIp == serverIp;
-    if (!comingFromServer) {
-      peers[comingIp] = {
-        name : "unknown",
-        socket : c
-      };
-    }
-
-    c.on('data', function(data){
-      data = data.toString();
-      if (comingFromServer) {
-        //handle server - host communication
-      } else {
-        // var type = data.split("|")[0];
-        // if (type == "myNameIs") {
-        //   peers[comingIp].name = data.split("|")[1];
-        // }
-        //Guest sending data
-        console.log(data);
-        history.push(data);
-      }
-    });
-  });
-  server.listen(8125);
-}
-
+});
+server.listen(8125);
 
 
 rl.on('line', (input) => {
@@ -140,236 +87,19 @@ var broadcast = function (msg){
   });
 }
 
-var connectToAllPeers = function() {
-  Object.keys(peers).forEach(function(key, idx) {
-    peers[key].socket.write(msg);
-  });
+var populateAndPrintHistory = function(h){
+    history = h;
+    history.forEach((x) => {console.log(x)});
 }
 
-//
-// client.connect({port: 8124, host: serverIp}, function() {
-//     // Say we are new client. State name and room.
-//     client.write("new|" + myName + "|" + roomName);
-//     client.on('data', function(data) {
-//       data = data.toString();
-//       var type = data.split('|')[0];
-//       switch (type) {
-//         case "host":
-//           // I am host.
-//           customer = new ClientHost({
-//             name : myName,
-//             ip : data.split('|')[1],
-//             room : roomName,
-//             serverSocket : client,
-//             history : ["system> " + myName + ' is host'],
-//             guests : []
-//           });
-//           break;
-//           case "guest":
-//             // I am guest.
-//             customer = new ClientGuest({
-//               name : myName,
-//               ip : data.split('|')[1],
-//               room : roomName,
-//               history : [],
-//               guests : []
-//             });
-//           break;
-//         default:
-//       }
-//       customer.listen();
-//     });
-// });
-
-
-//
-//
-// var net = require('net');
-// var client = new net.Socket();
-//
-// //
-// var readline = require('readline');
-// const rl = readline.createInterface({
-//   input: process.stdin,
-//   output: process.stdout
-// });
-//
-//
-// var myName = process.argv[2];
-// var roomName = process.argv[3] || "room1";
-// var serverIp = process.argv[4] || "192.168.0.97"; //my home network ip
-//
-// var guests = [];
-// var history = [];
-// var isHost = false;
-// var initialized = false;
-// var myIp;
-// //connect to server
-// client.connect({port: 8124, host: serverIp}, function() {
-//   // Say we are new client. State name and room.
-//   client.write("new|" + myName + "|" + roomName);
-//
-//   client.on('data', function(data) {
-//     data = data.toString();
-//     var type = data.split('|')[0];
-//     switch (type) {
-//       case "host":
-//         // I am host.
-//         console.log("system> " + myName + ' is host');
-//         history.push("system> " + myName + ' is host');
-//         isHost = true;
-//         myIp = data.split('|')[1];
-//         break;
-//       case "guest":
-//           // I am guest. Waiting for the host to contact me.
-//           const clientServer = net.createServer((c) => {
-//             c.on('data', function(buf) {
-//               buf = buf.toString();
-//               var inputType = buf.split('|')[0];
-//               if (!initialized && inputType == "historyGuests") {
-//                 let historyData = buf.split('|')[1];
-//                 let guestsData = buf.split('|')[2];
-//                 history = JSON.parse(historyData);
-//                 guests = connectToGuests(JSON.parse(guestsData));
-//                 guests.map((x) => {
-//                   if (x.isHost) {
-//                     x.clientSocket = c;
-//                   }
-//                   return x;
-//                 });
-//                 initialized = true;
-//                 history.map((x) => {console.log(x); return x;});
-//               } else if(inputType == "BECOMINGHOST") {
-//                 let commandComingFrom = c.remoteAddress.split(':')[3];
-//                 if (commandComingFrom == serverIp) {
-//                   isHost = true;
-//                   myIp = buf.split('|')[1];
-//                   // I am host.
-//                   console.log("system> " + myName + ' is host');
-//                   history.push("system> " + myName + ' is host');
-//                 }
-//               } else if (isHost && inputType=="newGuest") {
-//                 //we are the new host and we must take care of the new guests
-//                 handleGuestLogic(buf);
-//               }else {
-//                 console.log(buf);
-//                 history.push(buf);
-//               }
-//
-//               process.on('SIGINT', function() {
-//                 console.log('sigint inside');
-//                 c.end();
-//                 client.end();
-//                 process.exit();
-//               });
-//
-//
-//             });
-//           });
-//
-//           clientServer.on('error', (err) => {
-//             throw err;
-//           });
-//
-//           clientServer.listen(8125, () => {
-//             // console.log('guestServer bound');
-//           });
-//
-//         break;
-//       case "newGuest":
-//         handleGuestLogic(data);
-//         break;
-//       default:
-//     }
-//   });
-//
-// });
-//
-//
-// var connectToGuests = function(gs) {
-//   return gs.map(function(x) {
-//     //do not connect to host he is allready connected to us.
-//     if (!x.isHost) {
-//       let xClient = new net.Socket();
-//       xClient.connect({port: 8125, host: x.guestIp}, function() {
-//         xClient.on('data', function(buf) {
-//           buf = buf.toString();
-//           console.log(buf);
-//           history.push(buf);
-//         });
-//
-//         xClient.on('close', () => {
-//             guests = guests.filter((y) => x.guestIp != y.guestIp);
-//         })
-//
-//
-//       });
-//       x.clientSocket = xClient;
-//     }
-//     return x;
-//   });
-// }
-//
-// rl.on('line', (input) => {
-//   history.push(myName + ": " + input);
-//   guests.map(x => x.clientSocket.write(myName + ": " + input));
-// });
-//
-// var broadcastAndSave = function (message) {
-//   history.push(message);
-//   guests.map(x => x.clientSocket.write(message));
-// }
-//
-//
-//
-// var handleGuestLogic = function (data) {
-//   // new guest came and we are the host. connect and flush users and history.
-//   let guestName = data.split('|')[1];
-//   let guestIp = data.split('|')[2];
-//
-//   let newClientSocket = new net.Socket();
-//
-//   newClientSocket.connect({port: 8125, host: guestIp}, function() {
-//     newClientSocket.on('data',  function(buf) {
-//       buf = buf.toString();
-//       console.log(buf);
-//       history.push(buf);
-//     });
-//     //send guests name and ip only. Client will create connection socket himself.
-//     var guestsToSend = guests.map((x) => { return {
-//       guestIp : x.guestIp,
-//       name : x.name,
-//       isHost : false
-//     };});
-//     //send self(host)
-//     guestsToSend.push({
-//       guestIp : myIp,
-//       name : myName,
-//       isHost : true
-//     });
-//
-//     newClientSocket.on('close', () => {
-//         console.log("clientSOCKET closed");
-//         broadcastAndSave("system> " + guestName + " disconnected!");
-//         guests = guests.filter((x) => x.guestIp != guestIp);
-//     })
-//
-//     newClientSocket.write("historyGuests|"+JSON.stringify(history) + "|" + JSON.stringify(guestsToSend),
-//     function() {
-//       //after new guest has history and other guestst record him also
-//       guests.push({
-//               guestIp : guestIp,
-//               name : guestName,
-//               clientSocket : newClientSocket
-//             });
-//     });
-//
-//   });
-// }
-//
-//
-// process.on('SIGINT', function() {
-//   console.log('sigint outside');
-//   client.end();
-//   process.exit();
-// });
+var populateAndConnectToAllPeers = function(ipArray) {
+  ipArray.forEach(function(x) {
+    let s = new net.Socket();
+    s.connect({port: 8125, host: x}, function() {
+      peers[x] = {socket : s};
+      s.on("end", function(){
+        broadcast("system> "+x+" disconnected");
+      });
+    });
+  });
+}
