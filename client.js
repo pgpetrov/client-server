@@ -90,7 +90,12 @@ server = net.createServer((c) => {
     // broadcast("system> "+guestIp+" disconnected");
   });
 });
-server.listen(8125);
+server.listen(8125, () => {
+  // console.log('server bound');
+});
+server.on('error', (err) => {
+  throw err;
+});
 
 
 rl.on('line', (input) => {
