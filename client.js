@@ -60,9 +60,6 @@ server = net.createServer((c) => {
 
   c.on('data', function(data){
     data = data.toString();
-    console.log('------');
-    console.log(data);
-    console.log('------');
     var type = data.split('|')[0];
     switch (type) {
       case "newGuest":
@@ -81,7 +78,8 @@ server = net.createServer((c) => {
             guestSocket.on("end", function(){
               delete peers[guestIp];
               console.log("system> "+guestIp+" disconnected");
-              broadcast("system> "+guestIp+" disconnected");
+              history.push("system> "+guestIp+" disconnected");
+              // broadcast("system> "+guestIp+" disconnected");
               mainServerSocket.write("disconnected|" + guestIp);
             });
             peers[guestIp] = {clientSocket : guestSocket};
@@ -100,6 +98,9 @@ server = net.createServer((c) => {
 
   c.on("end", function(){
     delete peers[comingIp];
+    console.log("system> "+guestIp+" disconnected");
+    history.push("system> "+guestIp+" disconnected");
+
     // console.log("system> "+guestIp+" disconnected");
     // broadcast("system> "+guestIp+" disconnected");
   });
@@ -154,8 +155,11 @@ var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
         history.push(data);
       });
       s.on("end", function(){
+        delete peers[x];
+        console.log("system> "+guestIp+" disconnected");
+        history.push("system> "+guestIp+" disconnected");
         //TODO that is bad
-        broadcast("system> "+x+" disconnected");
+        // broadcast("system> "+x+" disconnected");
       });
     });
   });
