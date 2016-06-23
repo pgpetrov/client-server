@@ -96,6 +96,7 @@ server = net.createServer((c) => {
               });
 
               guestSocket.on('end', function(){
+                //TODO can't find peers[newGuestIp]
                 console.log("system> "+peers[newGuestIp].name+" disconnected");
                 history.push("system> "+peers[newGuestIp].name+" disconnected");
                 delete peers[newGuestIp];
@@ -189,6 +190,7 @@ var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
         });
       });
       s.on('end', function(){
+        //TODO can't find peers[x]
         console.log("system> "+peers[x].name+" disconnected");
         history.push("system> "+peers[x].name+" disconnected");
         delete peers[x];
