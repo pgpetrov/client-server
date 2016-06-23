@@ -9,6 +9,7 @@ const rl = readline.createInterface({
 var myName = process.argv[2]
   , roomName = process.argv[3] || "room1"
   , serverIp = process.argv[4] || "192.168.0.97"//"172.30.50.78" //"192.168.0.97"//my home network ip
+  , trace =  process.argv[5] || 0,
   , peers = {}
   , history = []
   , myIp
@@ -76,6 +77,8 @@ server = net.createServer((c) => {
             var guestSocket = new net.Socket();
             //TODO newGusetIp invvalid
             guestSocket.connect({port: 8125, host: newGuestIp}, function() {
+              if (trace) console.log("inside connect -> " + newGuestIp);
+
               if (trace) console.log(newGuestIp);
               //send all peers till now.
               guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers)) + ";"), function(){
@@ -100,6 +103,7 @@ server = net.createServer((c) => {
               });
 
               guestSocket.on('end', function(){
+                 if (trace) console.log("inside end -> " + newGuestIp);
                 //TODO can't find peers[newGuestIp]
                 console.log("system> "+peers[newGuestIp].name+" disconnected");
                 history.push("system> "+peers[newGuestIp].name+" disconnected");
@@ -183,7 +187,14 @@ var populateAndConnectToAllPeers = function(ipArray) {
   });
   Object.keys(peers).forEach(function(x) {
     let s = new net.Socket();
-    s.connect({port: 8125, host: x}, function() {
+    if (trace) console.log("inside for -> " + x);
+    s.connect({port: 8125, host: x}, rightX(x));
+  });
+}
+
+var rightX = function (x) {
+  return function() {
+      if (trace) console.log("inside connect -> " + x);
       peers[x].clientSocket = s;
       s.on('data', function(data){
         data = data.toString();
@@ -200,6 +211,5 @@ var populateAndConnectToAllPeers = function(ipArray) {
         history.push("system> "+peers[x].name+" disconnected");
         delete peers[x];
       });
-    });
-  });
+    }
 }
