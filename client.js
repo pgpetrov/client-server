@@ -60,6 +60,7 @@ server = net.createServer((c) => {
           guestSocket.connect({port: 8125, host: guestIp}, function() {
             //send all peers till now.
             guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))));
+            // console.log(guestSocket);
             guestSocket.on("data", function(data){
               data = data.toString();
               console.log(data);
@@ -90,9 +91,11 @@ server = net.createServer((c) => {
     // broadcast("system> "+guestIp+" disconnected");
   });
 });
-server.listen(8125, () => {
-  // console.log('server bound');
+
+server.listen(8125, "0.0.0.0", () => {
+  console.log('server bound');
 });
+
 server.on('error', (err) => {
   throw err;
 });
@@ -111,6 +114,7 @@ rl.on('line', (input) => {
 
 var broadcast = function (msg){
   history.push(msg);
+  console.log(Object.keys(peers));
   Object.keys(peers).forEach(function(key, idx) {
     peers[key].clientSocket.write(msg);
   });
