@@ -176,6 +176,7 @@ var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
     s.connect({port: 8125, host: x}, function() {
       peers[x].clientSocket = s;
       s.on('data', function(data){
+        data = data.toString();
         data.split(';').forEach(function(data) {
           data = data.toString();
           console.log(data);
