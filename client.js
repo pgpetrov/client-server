@@ -105,6 +105,7 @@ rl.on('line', (input) => {
   if (input == "exit") {
     Object.keys(peers).forEach(function(key, idx) {
       peers[key].clientSocket.end();
+      server.close();
     });
   } else {
     broadcast(myName + ": " + input);

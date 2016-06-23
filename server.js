@@ -51,6 +51,24 @@ const server = net.createServer((c) => {
                 }
                 //TODO handle host disconnect
               });
+
+              clientToHost.on("data", function(data) {
+                data = data.toString();
+                var type = data.split('|')[0];
+                if (type == "disconnect") {
+                  let removeIp = data.split('|')[1];
+                  let removeIndex = -1;
+                  rooms[clientRoom].roomGuests.every(function(x,i){
+                    if(x.guestIp == removeIp) {
+                      rooms[clientRoom].roomGuests.splice(removeIndex,1);
+                      return false;
+                    }
+                    return true;
+                  });
+
+                }
+              });
+
             })
 
 
