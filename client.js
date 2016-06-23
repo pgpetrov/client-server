@@ -153,8 +153,8 @@ server = net.createServer((c) => {
      delete peers[comingIp];
     }
     if (trace) {console.log("some server end");}
-    console.log("system> "+guestIp+" disconnected");
-    broadcast("system> "+guestIp+" disconnected");
+    console.log("system> "+comingIp+" disconnected");
+    broadcast("system> "+comingIp+" disconnected");
   });
 });
 
