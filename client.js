@@ -44,10 +44,10 @@ client.connect({port: 8124, host: serverIp}, function() {
 server = net.createServer((c) => {
   let comingIp = c.remoteAddress.split(':')[3];
   var comingFromServer = comingIp == serverIp;
-  // if(!comingFromServer) {
+  if(!comingFromServer) {
     // we have new connection not coming from the server. Record it.
     peers[comingIp] = {clientSocket : c};
-  // }
+  }
 
   c.on('data', function(data){
     data = data.toString();
