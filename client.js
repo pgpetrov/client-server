@@ -65,6 +65,9 @@ server = net.createServer((c) => {
           var newGuestIp = data.split('|')[1];
           var guestSocket = new net.Socket();
           guestSocket.connect({port: 8125, host: newGuestIp}, function() {
+            console.log("system> "+newGuestIp+" connected");
+            broadcast("system> "+newGuestIp+" connected");
+
             //send all peers till now.
             guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))));
             guestSocket.on("data", function(data){
@@ -87,6 +90,10 @@ server = net.createServer((c) => {
         populateAndPrintHistory(JSON.parse(data.split('|')[1]));
         populateAndConnectToAllPeers(JSON.parse(data.split('|')[2]));
         break;
+      case "BECOMINGHOST":
+        if (comingFromServer) {
+          isHost = true;
+        }
       default:
         console.log(data);
         history.push(data);
@@ -95,8 +102,6 @@ server = net.createServer((c) => {
 
   c.on("end", function(){
     delete peers[comingIp];
-    console.log("system> "+comingIp+" disconnected");
-    history.push("system> "+comingIp+" disconnected");
 
     // console.log("system> "+guestIp+" disconnected");
     // broadcast("system> "+guestIp+" disconnected");
@@ -117,6 +122,7 @@ rl.on('line', (input) => {
     server.close();
     Object.keys(peers).forEach(function(key, idx) {
       peers[key].clientSocket.end();
+      process.exit();
     });
   } else {
     broadcast(myName + ": " + input);

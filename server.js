@@ -54,8 +54,11 @@ const server = net.createServer((c) => {
 
               clientToHost.on("data", function(data) {
                 data = data.toString();
+                console.log(data);
                 var type = data.split('|')[0];
-                if (type == "disconnect") {
+                if (type == "disconnected") {
+                  console.log("Host reports client disconnect: " + data);
+                  console.log(rooms[clientRoom].roomGuests);
                   let removeIp = data.split('|')[1];
                   let removeIndex = -1;
                   rooms[clientRoom].roomGuests.every(function(x,i){
@@ -65,10 +68,8 @@ const server = net.createServer((c) => {
                     }
                     return true;
                   });
+                  console.log(rooms[clientRoom].roomGuests);
                 }
-                console.log("-----");
-                console.log(data);
-                console.log("-----");
               });
 
             })
