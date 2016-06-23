@@ -29,6 +29,7 @@ const server = net.createServer((c) => {
             } else {
 
               c.write("guest|" + guestIp + "|" + rooms[clientRoom].hostIp + ";");
+              console.log("pushing " + clientName + " with ip " + guestIp);
               //guest came for this room. Send him the host ip.
               rooms[clientRoom].roomGuests.push({
                 name : clientName,
@@ -78,7 +79,6 @@ var setupHostConnection = function(guestIp, clientName, clientRoom) {
         // host left and no more guests. drop room.
         rooms[clientRoom] = undefined;
       }
-      //TODO handle host disconnect
     });
 
     clientToHost.on('data', function(data) {
@@ -89,10 +89,9 @@ var setupHostConnection = function(guestIp, clientName, clientRoom) {
           console.log("Host reports client disconnect: " + data);
           console.log(rooms[clientRoom].roomGuests);
           let removeIp = data.split('|')[1];
-          let removeIndex = -1;
           rooms[clientRoom].roomGuests.every(function(x,i){
             if(x.guestIp == removeIp) {
-              rooms[clientRoom].roomGuests.splice(removeIndex,1);
+              rooms[clientRoom].roomGuests.splice(i,1);
               return false;
             }
             return true;
