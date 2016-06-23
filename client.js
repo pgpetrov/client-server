@@ -92,6 +92,14 @@ server = net.createServer((c) => {
                 });
               });
 
+              guestSocket.on('error', function(err){
+                 console.log("guest socket error -> " + err);
+              });
+
+              guestSocket.on('close', function(){
+                console.log("close event occured");
+              });
+
               guestSocket.on('end', function(){
                  if (trace) console.log("inside end -> " + newGuestIp);
                 //TODO can't find peers[newGuestIp]
