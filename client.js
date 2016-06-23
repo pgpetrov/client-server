@@ -17,10 +17,11 @@ var isHost;
 
 var net = require('net');
 var client = new net.Socket();
+//connect to server
 client.connect({port: 8124, host: serverIp}, function() {
   // Say we are new client. State name and room.
   client.write("new|" + myName + "|" + roomName);
-  // Let's implement this as if we con't know what we are
+  // get response from the server.
   client.on('data', function(data) {
     data = data.toString();
     var type = data.split('|')[0];
@@ -44,10 +45,10 @@ client.connect({port: 8124, host: serverIp}, function() {
 server = net.createServer((c) => {
   let comingIp = c.remoteAddress.split(':')[3];
   var comingFromServer = comingIp == serverIp;
-  if(!comingFromServer) {
+  // if(!comingFromServer) {
     // we have new connection not coming from the server. Record it.
     peers[comingIp] = {clientSocket : c};
-  }
+  // }
 
   c.on('data', function(data){
     data = data.toString();
