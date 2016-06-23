@@ -92,7 +92,7 @@ server = net.createServer((c) => {
   });
 });
 
-server.listen(8125, "0.0.0.0", () => {
+server.listen(8125, () => {
   console.log('server bound');
 });
 
