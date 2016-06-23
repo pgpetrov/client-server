@@ -7,7 +7,7 @@ const rl = readline.createInterface({
 });
 
 var myName = process.argv[2]
-  , trace =  process.argv[3] || 0,
+  , trace =  process.argv[3] || 0
   , roomName = process.argv[4] || "room1"
   , serverIp = process.argv[5] || "192.168.0.97"//"172.30.50.78" //"192.168.0.97"//my home network ip
   , peers = {}
