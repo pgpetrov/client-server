@@ -20,8 +20,6 @@ var net = require('net')
   , client = new net.Socket();
 //connect to server
 client.connect({port: 8124, host: serverIp}, function() {
-  // Say we are new client. State name and room.
-  client.write("new|" + myName + "|" + roomName + ";");
   // get response from the server.
   client.on('data', function(data) {
     data = data.toString();
@@ -46,6 +44,8 @@ client.connect({port: 8124, host: serverIp}, function() {
       client.destroy();
     });
   });
+  // Say we are new client. State name and room.
+  client.write("new|" + myName + "|" + roomName + ";");
 });
 
 
@@ -62,8 +62,10 @@ server = net.createServer((c) => {
     mainServerSocket = c;
   }
 
+  // someone connected to us
   c.on('data', function(data){
     data = data.toString();
+    if (trace) console.log(data);
     data.split(';').forEach(function(data) {
       var type = data.split('|')[0];
       switch (type) {
@@ -72,17 +74,19 @@ server = net.createServer((c) => {
             var newGuestIp = data.split('|')[1];
             var newGuestName = data.split('|')[2];
             var guestSocket = new net.Socket();
+            //TODO newGusetIp invvalid
             guestSocket.connect({port: 8125, host: newGuestIp}, function() {
+              if (trace) console.log(newGuestIp);
               //send all peers till now.
               guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers)) + ";"), function(){
-                process.nextTick(function(){
+                // process.nextTick(function(){
                   peers[newGuestIp] = {
                     clientSocket : guestSocket,
                     name : newGuestName
                   };
                   console.log("system> "+peers[newGuestIp].name+" connected");
                   broadcast("system> "+peers[newGuestIp].name+" connected");
-                });
+                // });
               });
 
               guestSocket.on('data', function(data){
@@ -131,8 +135,9 @@ server = net.createServer((c) => {
   });
 
   c.on('end', function(){
-    delete peers[comingIp];
-
+    if (peers[comingIp]) {
+     delete peers[comingIp];
+    }
     // console.log("system> "+guestIp+" disconnected");
     // broadcast("system> "+guestIp+" disconnected");
   });
@@ -172,7 +177,7 @@ var populateAndPrintHistory = function(h){
     history.forEach((x) => {console.log(x)});
 }
 
-var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
+var populateAndConnectToAllPeers = function(ipArray) {
   ipArray.forEach(function(x) {
     peers[x] = {};
   });
