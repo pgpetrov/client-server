@@ -153,9 +153,7 @@ var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
         console.log(data);
         history.push(data);
       });
-      s.on("end", function(data){
-        data = data.toString();
-        console.log(data);
+      s.on("end", function(){
         //TODO that is bad
         broadcast("system> "+x+" disconnected");
       });
