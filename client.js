@@ -137,9 +137,12 @@ var populateAndPrintHistory = function(h){
 
 var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
   ipArray.forEach(function(x) {
+    peers[x] = {};
+  });
+  Object.keys(peers).forEach(function(x) {
     let s = new net.Socket();
     s.connect({port: 8125, host: x}, function() {
-      peers[x] = {clientSocket : s};
+      peers[x].clientSocket = s;
       s.on("end", function(){
         broadcast("system> "+x+" disconnected");
       });
