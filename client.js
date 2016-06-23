@@ -14,6 +14,7 @@ var history = [];
 var myIp;
 var server;
 var isHost;
+var mainServerSocket;
 
 var net = require('net');
 var client = new net.Socket();
@@ -45,10 +46,14 @@ client.connect({port: 8124, host: serverIp}, function() {
 server = net.createServer((c) => {
   let comingIp = c.remoteAddress.split(':')[3];
   var comingFromServer = comingIp == serverIp;
-  // if(!comingFromServer) {
+  if(!comingFromServer) {
     // we have new connection not coming from the server. Record it.
+    console.log("set socket for ip " + comingIp);
     peers[comingIp] = {clientSocket : c};
-  // }
+  } else {
+    console.log("set main server socket");
+    mainServerSocket = c;
+  }
 
   c.on('data', function(data){
     data = data.toString();
@@ -71,6 +76,7 @@ server = net.createServer((c) => {
               delete peers[guestIp];
               console.log("system> "+guestIp+" disconnected");
               broadcast("system> "+guestIp+" disconnected");
+              mainServerSocket.write("disconnected|" + guestIp);
             });
             peers[guestIp] = {clientSocket : guestSocket};
           });

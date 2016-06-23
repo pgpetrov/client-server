@@ -65,8 +65,10 @@ const server = net.createServer((c) => {
                     }
                     return true;
                   });
-
                 }
+                console.log("-----");
+                console.log(data);
+                console.log("-----");
               });
 
             })
