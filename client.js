@@ -182,7 +182,6 @@ var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
       s.on('data', function(data){
         data = data.toString();
         data.split(';').forEach(function(data) {
-          data = data.toString();
           if (data.length > 0) {
             console.log(data);
             history.push(data);

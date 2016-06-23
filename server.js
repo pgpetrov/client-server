@@ -83,21 +83,23 @@ var setupHostConnection = function(guestIp, clientName, clientRoom) {
 
     clientToHost.on('data', function(data) {
       data = data.toString();
-      var type = data.split('|')[0];
-      if (type == "disconnected") {
-        console.log("Host reports client disconnect: " + data);
-        console.log(rooms[clientRoom].roomGuests);
-        let removeIp = data.split('|')[1];
-        let removeIndex = -1;
-        rooms[clientRoom].roomGuests.every(function(x,i){
-          if(x.guestIp == removeIp) {
-            rooms[clientRoom].roomGuests.splice(removeIndex,1);
-            return false;
-          }
-          return true;
-        });
-        console.log(rooms[clientRoom].roomGuests);
-      }
+      data.split(';').forEach(function(data) {
+        var type = data.split('|')[0];
+        if (type == "disconnected") {
+          console.log("Host reports client disconnect: " + data);
+          console.log(rooms[clientRoom].roomGuests);
+          let removeIp = data.split('|')[1];
+          let removeIndex = -1;
+          rooms[clientRoom].roomGuests.every(function(x,i){
+            if(x.guestIp == removeIp) {
+              rooms[clientRoom].roomGuests.splice(removeIndex,1);
+              return false;
+            }
+            return true;
+          });
+          console.log(rooms[clientRoom].roomGuests);
+        }
+      });
     });
 
   });
