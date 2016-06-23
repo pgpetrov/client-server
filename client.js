@@ -93,7 +93,10 @@ server = net.createServer((c) => {
       case "BECOMINGHOST":
         if (comingFromServer) {
           isHost = true;
+          console.log("system> "+myName+" is host");
+          broadcast("system> "+myName+" is host");
         }
+        break;
       default:
         console.log(data);
         history.push(data);
