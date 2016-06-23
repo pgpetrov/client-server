@@ -97,7 +97,8 @@ server = net.createServer((c) => {
               });
 
               guestSocket.on('close', function(){
-                  if (trace) console.log("inside end -> " + newGuestIp);
+                  if (trace) console.log("inside close -> " + newGuestIp);
+                  if (trace) console.log(Object.keys(peers));
                  //TODO can't find peers[newGuestIp]
                  console.log("system> "+peers[newGuestIp].name+" disconnected");
                  history.push("system> "+peers[newGuestIp].name+" disconnected");
@@ -116,21 +117,19 @@ server = net.createServer((c) => {
 
               //send all peers till now.
               guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers)) + ";"), function(){
-                // process.nextTick(function(){
                   peers[newGuestIp] = {
                     clientSocket : guestSocket,
                     name : newGuestName
                   };
                   console.log("system> "+peers[newGuestIp].name+" connected");
                   broadcast("system> "+peers[newGuestIp].name+" connected");
-                // });
               });
             });
           }
           break;
         case "historyPeers":
           populateAndPrintHistory(JSON.parse(data.split('|')[1]));
-          populateAndConnectToAllPeers(JSON.parse(data.split('|')[2]));
+          populateAndConnectToAllPeers(JSON.parse(data.split('|')[2]), c);
           break;
         case "BECOMINGHOST":
           if (comingFromServer) {
@@ -154,8 +153,8 @@ server = net.createServer((c) => {
      delete peers[comingIp];
     }
     if (trace) {console.log("some server end");}
-    // console.log("system> "+guestIp+" disconnected");
-    // broadcast("system> "+guestIp+" disconnected");
+    console.log("system> "+guestIp+" disconnected");
+    broadcast("system> "+guestIp+" disconnected");
   });
 });
 
@@ -195,14 +194,19 @@ var populateAndPrintHistory = function(h){
     history.forEach((x) => {console.log(x)});
 }
 
-var populateAndConnectToAllPeers = function(ipArray) {
+var populateAndConnectToAllPeers = function(ipArray,  hostSocket) {
   ipArray.forEach(function(x) {
     peers[x] = {};
   });
-  Object.keys(peers).forEach(function(x) {
-    let s = new net.Socket();
-    if (trace) console.log("inside for -> " + x);
-    s.connect({port: 8125, host: x}, rightX(x, s));
+  Object.keys(peers).forEach(function(x,i) {
+    // don't connect to host
+    if (i == 0) {
+      peers[x].clientSocket = hostSocket;
+    } else {
+      let s = new net.Socket();
+      if (trace) console.log("inside for -> " + x);
+      s.connect({port: 8125, host: x}, rightX(x, s));
+    }
   });
 }
 
