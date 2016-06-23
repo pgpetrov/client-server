@@ -62,9 +62,9 @@ server = net.createServer((c) => {
     switch (type) {
       case "newGuest":
         if (comingFromServer) {
-          var guestIp = data.split('|')[1];
+          var newGuestIp = data.split('|')[1];
           var guestSocket = new net.Socket();
-          guestSocket.connect({port: 8125, host: guestIp}, function() {
+          guestSocket.connect({port: 8125, host: newGuestIp}, function() {
             //send all peers till now.
             guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))));
             guestSocket.on("data", function(data){
@@ -73,13 +73,13 @@ server = net.createServer((c) => {
               history.push(data);
             });
             guestSocket.on("end", function(){
-              delete peers[guestIp];
-              console.log("system> "+guestIp+" disconnected");
-              history.push("system> "+guestIp+" disconnected");
-              // broadcast("system> "+guestIp+" disconnected");
-              mainServerSocket.write("disconnected|" + guestIp);
+              delete peers[newGuestIp];
+              console.log("system> "+newGuestIp+" disconnected");
+              history.push("system> "+newGuestIp+" disconnected");
+              // broadcast("system> "+newGuestIp+" disconnected");
+              mainServerSocket.write("disconnected|" + newGuestIp);
             });
-            peers[guestIp] = {clientSocket : guestSocket};
+            peers[newGuestIp] = {clientSocket : guestSocket};
           });
         }
         break;
@@ -95,8 +95,8 @@ server = net.createServer((c) => {
 
   c.on("end", function(){
     delete peers[comingIp];
-    console.log("system> "+guestIp+" disconnected");
-    history.push("system> "+guestIp+" disconnected");
+    console.log("system> "+comingIp+" disconnected");
+    history.push("system> "+comingIp+" disconnected");
 
     // console.log("system> "+guestIp+" disconnected");
     // broadcast("system> "+guestIp+" disconnected");
