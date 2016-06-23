@@ -151,8 +151,8 @@ var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
       });
       s.on("end", function(){
         delete peers[x];
-        console.log("system> "+guestIp+" disconnected");
-        history.push("system> "+guestIp+" disconnected");
+        console.log("system> "+x+" disconnected");
+        history.push("system> "+x+" disconnected");
         //TODO that is bad
         // broadcast("system> "+x+" disconnected");
       });
