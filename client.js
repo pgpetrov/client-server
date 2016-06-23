@@ -188,11 +188,11 @@ var populateAndConnectToAllPeers = function(ipArray) {
   Object.keys(peers).forEach(function(x) {
     let s = new net.Socket();
     if (trace) console.log("inside for -> " + x);
-    s.connect({port: 8125, host: x}, rightX(x));
+    s.connect({port: 8125, host: x}, rightX(x, s));
   });
 }
 
-var rightX = function (x) {
+var rightX = function (x, s) {
   return function() {
       if (trace) console.log("inside connect -> " + x);
       peers[x].clientSocket = s;
