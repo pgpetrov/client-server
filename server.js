@@ -75,6 +75,8 @@ const server = net.createServer((c) => {
 
 
           } else {
+
+            c.write("guest|" + guestIp + "|" + rooms[clientRoom].hostIp);
             //guest came for this room. Send him the host ip.
             rooms[clientRoom].roomGuests.push({
               name : clientName,

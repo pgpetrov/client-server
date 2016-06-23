@@ -33,6 +33,8 @@ client.connect({port: 8124, host: serverIp}, function() {
         broadcast("system> " + myName + " is host");
         break;
       case "guest":
+        //just save the hostip among the peers
+        peers[data.split('|')[2]] = {};
         //we do nothing here. Server will notify the host about us.
         break;
       default:
