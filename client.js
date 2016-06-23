@@ -149,11 +149,11 @@ server.on('error', (err) => {
 
 rl.on('line', (input) => {
   if (input == "exit") {
-    server.close();
     Object.keys(peers).forEach(function(key, idx) {
       peers[key].clientSocket.end();
-      process.exit();
     });
+    server.close();
+    process.exit();
   } else {
     broadcast(myName + ": " + input);
   }
