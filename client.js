@@ -6,18 +6,18 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-var myName = process.argv[2];
-var roomName = process.argv[3] || "room1";
-var serverIp = process.argv[4] || "172.30.50.78"; //"192.168.0.97";//my home network ip
-var peers = {};
-var history = [];
-var myIp;
-var server;
-var isHost;
-var mainServerSocket;
+var myName = process.argv[2]
+  , roomName = process.argv[3] || "room1"
+  , serverIp = process.argv[4] || "172.30.50.78" //"192.168.0.97"//my home network ip
+  , peers = {}
+  , history = []
+  , myIp
+  , server
+  , isHost
+  , mainServerSocket;
 
-var net = require('net');
-var client = new net.Socket();
+var net = require('net')
+  , client = new net.Socket();
 //connect to server
 client.connect({port: 8124, host: serverIp}, function() {
   // Say we are new client. State name and room.
@@ -53,6 +53,7 @@ server = net.createServer((c) => {
     console.log("set socket for ip " + comingIp);
     peers[comingIp] = {clientSocket : c};
   } else {
+    // We will need this if we are host.
     console.log("set main server socket");
     mainServerSocket = c;
   }
@@ -145,6 +146,7 @@ var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
   Object.keys(peers).forEach(function(x) {
     let s = new net.Socket();
     s.connect({port: 8125, host: x}, function() {
+      console.log("set socket for ip - " + x);
       peers[x].clientSocket = s;
       s.on("end", function(){
         broadcast("system> "+x+" disconnected");

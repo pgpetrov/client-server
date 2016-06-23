@@ -83,8 +83,7 @@ const server = net.createServer((c) => {
               guestIp : guestIp
             });
             // c.write("guest|"+rooms[clientRoom].hostIp + "|"+c.remoteAddress.split(':')[3], function() {c.destroy()});
-            rooms[clientRoom].hostSocket.write("newGuest|" + guestIp);
-            c.end();
+            rooms[clientRoom].hostSocket.write(("newGuest|" + guestIp), function(){c.end()});
           }
         break;
       default:
