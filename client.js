@@ -148,7 +148,15 @@ var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
     s.connect({port: 8125, host: x}, function() {
       console.log("set socket for ip - " + x);
       peers[x].clientSocket = s;
-      s.on("end", function(){
+      s.on("data", function(data){
+        data = data.toString();
+        console.log(data);
+        history.push(data);
+      });
+      s.on("end", function(data){
+        data = data.toString();
+        console.log(data);
+        //TODO that is bad
         broadcast("system> "+x+" disconnected");
       });
     });
