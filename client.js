@@ -50,11 +50,9 @@ server = net.createServer((c) => {
   var comingFromServer = comingIp == serverIp;
   if(!comingFromServer) {
     // we have new connection not coming from the server. Record it.
-    console.log("set socket for ip " + comingIp);
     peers[comingIp] = {clientSocket : c};
   } else {
     // We will need this if we are host.
-    console.log("set main server socket");
     mainServerSocket = c;
   }
 
@@ -69,7 +67,6 @@ server = net.createServer((c) => {
           guestSocket.connect({port: 8125, host: guestIp}, function() {
             //send all peers till now.
             guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))));
-            // console.log(guestSocket);
             guestSocket.on("data", function(data){
               data = data.toString();
               console.log(data);
@@ -129,7 +126,6 @@ rl.on('line', (input) => {
 
 var broadcast = function (msg){
   history.push(msg);
-  console.log(Object.keys(peers));
   Object.keys(peers).forEach(function(key, idx) {
     peers[key].clientSocket.write(msg);
   });
@@ -147,7 +143,6 @@ var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
   Object.keys(peers).forEach(function(x) {
     let s = new net.Socket();
     s.connect({port: 8125, host: x}, function() {
-      console.log("set socket for ip - " + x);
       peers[x].clientSocket = s;
       s.on("data", function(data){
         data = data.toString();
