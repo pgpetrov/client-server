@@ -38,7 +38,9 @@ const server = net.createServer((c) => {
             }
           break;
         default:
-        console.log(data);
+          if (data.length > 0) {
+            console.log(data);
+          }
       }
     });
   });
@@ -81,7 +83,6 @@ var setupHostConnection = function(guestIp, clientName, clientRoom) {
 
     clientToHost.on('data', function(data) {
       data = data.toString();
-      console.log(data);
       var type = data.split('|')[0];
       if (type == "disconnected") {
         console.log("Host reports client disconnect: " + data);

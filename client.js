@@ -88,8 +88,10 @@ server = net.createServer((c) => {
               guestSocket.on('data', function(data){
                 data = data.toString();
                 data.split(';').forEach(function(data) {
-                  console.log(data);
-                  history.push(data);
+                  if (data.length > 0) {
+                    console.log(data);
+                    history.push(data);
+                  }
                 });
               });
 
@@ -115,8 +117,10 @@ server = net.createServer((c) => {
           }
           break;
         default:
-          console.log(data);
-          history.push(data);
+          if (data.length > 0) {
+            console.log(data);
+            history.push(data);
+          }
       }
 
 
@@ -179,8 +183,10 @@ var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
         data = data.toString();
         data.split(';').forEach(function(data) {
           data = data.toString();
-          console.log(data);
-          history.push(data);
+          if (data.length > 0) {
+            console.log(data);
+            history.push(data);
+          }
         });
       });
       s.on('end', function(){
