@@ -21,28 +21,30 @@ var net = require('net')
 //connect to server
 client.connect({port: 8124, host: serverIp}, function() {
   // Say we are new client. State name and room.
-  client.write("new|" + myName + "|" + roomName);
+  client.write("new|" + myName + "|" + roomName + ";");
   // get response from the server.
   client.on('data', function(data) {
     data = data.toString();
-    var type = data.split('|')[0];
-    myIp = data.split('|')[1];
-    switch (type) {
-      case "host":
-        console.log("system> " + myName + " is host");
-        broadcast("system> " + myName + " is host");
-        break;
-      case "guest":
-        //just save the hostip among the peers
-        peers[data.split('|')[2]] = {
-          name : myName
-        };
-        //we do nothing here. Server will notify the host about us.
-        break;
-      default:
-    }
-    client.end();
-    client.destroy();
+    data.split(';').forEach(function(data) {
+      var type = data.split('|')[0];
+      myIp = data.split('|')[1];
+      switch (type) {
+        case "host":
+          console.log("system> " + myName + " is host");
+          broadcast("system> " + myName + " is host");
+          break;
+        case "guest":
+          //just save the hostip among the peers
+          peers[data.split('|')[2]] = {
+            name : myName
+          };
+          //we do nothing here. Server will notify the host about us.
+          break;
+        default:
+      }
+      client.end();
+      client.destroy();
+    });
   });
 });
 
@@ -62,58 +64,68 @@ server = net.createServer((c) => {
 
   c.on('data', function(data){
     data = data.toString();
-    var type = data.split('|')[0];
-    switch (type) {
-      case "newGuest":
-        if (comingFromServer) {
-          var newGuestIp = data.split('|')[1];
-          var newGuestName = data.split('|')[2];
-          var guestSocket = new net.Socket();
-          guestSocket.connect({port: 8125, host: newGuestIp}, function() {
+    data.split(';').forEach(function(data) {
+      var type = data.split('|')[0];
+      switch (type) {
+        case "newGuest":
+          if (comingFromServer) {
+            var newGuestIp = data.split('|')[1];
+            var newGuestName = data.split('|')[2];
+            var guestSocket = new net.Socket();
+            guestSocket.connect({port: 8125, host: newGuestIp}, function() {
+              //send all peers till now.
+              guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers)) + ";"), function(){
+                process.nextTick(function(){
+                  peers[newGuestIp] = {
+                    clientSocket : guestSocket,
+                    name : newGuestName
+                  };
+                  console.log("system> "+peers[newGuestIp].name+" connected");
+                  broadcast("system> "+peers[newGuestIp].name+" connected");
+                });
+              });
 
-            //send all peers till now.
-            guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))));
-            console.log("------------");
-            console.log(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers))));
-            console.log("------------");
-            guestSocket.on("data", function(data){
-              data = data.toString();
-              console.log(data);
-              history.push(data);
+              guestSocket.on('data', function(data){
+                data = data.toString();
+                data.split(';').forEach(function(data) {
+                  console.log(data);
+                  history.push(data);
+                });
+              });
+
+              guestSocket.on('end', function(){
+                console.log("system> "+peers[newGuestIp].name+" disconnected");
+                history.push("system> "+peers[newGuestIp].name+" disconnected");
+                delete peers[newGuestIp];
+                mainServerSocket.write("disconnected|" + newGuestIp + ";");
+              });
+
             });
-            guestSocket.on("end", function(){
-              console.log("system> "+peers[newGuestIp].name+" disconnected");
-              history.push("system> "+peers[newGuestIp].name+" disconnected");
-              delete peers[newGuestIp];
-              mainServerSocket.write("disconnected|" + newGuestIp);
-            });
-            peers[newGuestIp] = {
-              clientSocket : guestSocket,
-              name : newGuestName
-            };
-            console.log("system> "+peers[newGuestIp].name+" connected");
-            broadcast("system> "+peers[newGuestIp].name+" connected");
-          });
-        }
-        break;
-      case "historyPeers":
-        populateAndPrintHistory(JSON.parse(data.split('|')[1]));
-        populateAndConnectToAllPeers(JSON.parse(data.split('|')[2]));
-        break;
-      case "BECOMINGHOST":
-        if (comingFromServer) {
-          isHost = true;
-          console.log("system> "+myName+" is host");
-          broadcast("system> "+myName+" is host");
-        }
-        break;
-      default:
-        console.log(data);
-        history.push(data);
-    }
+          }
+          break;
+        case "historyPeers":
+          populateAndPrintHistory(JSON.parse(data.split('|')[1]));
+          populateAndConnectToAllPeers(JSON.parse(data.split('|')[2]));
+          break;
+        case "BECOMINGHOST":
+          if (comingFromServer) {
+            isHost = true;
+            console.log("system> "+myName+" is host");
+            broadcast("system> "+myName+" is host");
+          }
+          break;
+        default:
+          console.log(data);
+          history.push(data);
+      }
+
+
+
+
+    })
   });
 
-  c.on("end", function(){
+  c.on('end', function(){
     delete peers[comingIp];
 
     // console.log("system> "+guestIp+" disconnected");
@@ -146,7 +158,7 @@ rl.on('line', (input) => {
 var broadcast = function (msg){
   history.push(msg);
   Object.keys(peers).forEach(function(key, idx) {
-    peers[key].clientSocket.write(msg);
+    peers[key].clientSocket.write(msg+";");
   });
 }
 
@@ -163,12 +175,14 @@ var populateAndConnectToAllPeers = function(ipArray, comingIp, c) {
     let s = new net.Socket();
     s.connect({port: 8125, host: x}, function() {
       peers[x].clientSocket = s;
-      s.on("data", function(data){
-        data = data.toString();
-        console.log(data);
-        history.push(data);
+      s.on('data', function(data){
+        data.split(';').forEach(function(data) {
+          data = data.toString();
+          console.log(data);
+          history.push(data);
+        });
       });
-      s.on("end", function(){
+      s.on('end', function(){
         console.log("system> "+peers[x].name+" disconnected");
         history.push("system> "+peers[x].name+" disconnected");
         delete peers[x];
