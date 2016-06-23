@@ -80,17 +80,7 @@ server = net.createServer((c) => {
               if (trace) console.log("inside connect -> " + newGuestIp);
 
               if (trace) console.log(newGuestIp);
-              //send all peers till now.
-              guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers)) + ";"), function(){
-                // process.nextTick(function(){
-                  peers[newGuestIp] = {
-                    clientSocket : guestSocket,
-                    name : newGuestName
-                  };
-                  console.log("system> "+peers[newGuestIp].name+" connected");
-                  broadcast("system> "+peers[newGuestIp].name+" connected");
-                // });
-              });
+
 
               guestSocket.on('data', function(data){
                 data = data.toString();
@@ -111,6 +101,17 @@ server = net.createServer((c) => {
                 mainServerSocket.write("disconnected|" + newGuestIp + ";");
               });
 
+              //send all peers till now.
+              guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers)) + ";"), function(){
+                // process.nextTick(function(){
+                  peers[newGuestIp] = {
+                    clientSocket : guestSocket,
+                    name : newGuestName
+                  };
+                  console.log("system> "+peers[newGuestIp].name+" connected");
+                  broadcast("system> "+peers[newGuestIp].name+" connected");
+                // });
+              });
             });
           }
           break;
@@ -132,9 +133,6 @@ server = net.createServer((c) => {
           }
       }
 
-
-
-
     })
   });
 
@@ -142,6 +140,7 @@ server = net.createServer((c) => {
     if (peers[comingIp]) {
      delete peers[comingIp];
     }
+    if (trace) {console.log("some server end");}
     // console.log("system> "+guestIp+" disconnected");
     // broadcast("system> "+guestIp+" disconnected");
   });
@@ -152,6 +151,7 @@ server.listen(8125, () => {
 });
 
 server.on('error', (err) => {
+  console.log("server error " + err);
   throw err;
 });
 
@@ -160,6 +160,7 @@ rl.on('line', (input) => {
   if (input == "exit") {
     Object.keys(peers).forEach(function(key, idx) {
       peers[key].clientSocket.end();
+      peers[key].clientSocket.destroy();
     });
     server.close();
     process.exit();
