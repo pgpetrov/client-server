@@ -53,7 +53,7 @@ var setupHostConnection = function(guestIp, clientName, clientRoom) {
     console.log("connected to host");
     rooms[clientRoom].hostSocket = clientToHost;
 
-    clientToHost.on('end', function() {
+    clientToHost.on('close', function() {
       console.log("OUCH host " + clientName + " for room " + clientRoom + " disconnected!");
       console.log(rooms[clientRoom].roomGuests);
       // Handle hosts disconnect

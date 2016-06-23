@@ -93,21 +93,26 @@ server = net.createServer((c) => {
               });
 
               guestSocket.on('error', function(err){
-                 console.log("guest socket error -> " + err);
+                 if (trace) console.log("guest socket error -> " + err);
               });
 
               guestSocket.on('close', function(){
-                console.log("close event occured");
+                  if (trace) console.log("inside end -> " + newGuestIp);
+                 //TODO can't find peers[newGuestIp]
+                 console.log("system> "+peers[newGuestIp].name+" disconnected");
+                 history.push("system> "+peers[newGuestIp].name+" disconnected");
+                 delete peers[newGuestIp];
+                 mainServerSocket.write("disconnected|" + newGuestIp + ";");
               });
 
-              guestSocket.on('end', function(){
-                 if (trace) console.log("inside end -> " + newGuestIp);
-                //TODO can't find peers[newGuestIp]
-                console.log("system> "+peers[newGuestIp].name+" disconnected");
-                history.push("system> "+peers[newGuestIp].name+" disconnected");
-                delete peers[newGuestIp];
-                mainServerSocket.write("disconnected|" + newGuestIp + ";");
-              });
+              // guestSocket.on('end', function(){
+              //    if (trace) console.log("inside end -> " + newGuestIp);
+              //   //TODO can't find peers[newGuestIp]
+              //   console.log("system> "+peers[newGuestIp].name+" disconnected");
+              //   history.push("system> "+peers[newGuestIp].name+" disconnected");
+              //   delete peers[newGuestIp];
+              //   mainServerSocket.write("disconnected|" + newGuestIp + ";");
+              // });
 
               //send all peers till now.
               guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers)) + ";"), function(){
@@ -144,7 +149,7 @@ server = net.createServer((c) => {
     })
   });
 
-  c.on('end', function(){
+  c.on('close', function(){
     if (peers[comingIp]) {
      delete peers[comingIp];
     }
@@ -214,7 +219,7 @@ var rightX = function (x, s) {
           }
         });
       });
-      s.on('end', function(){
+      s.on('close', function(){
         //TODO can't find peers[x]
         console.log("system> "+peers[x].name+" disconnected");
         history.push("system> "+peers[x].name+" disconnected");
