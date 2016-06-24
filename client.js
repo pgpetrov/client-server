@@ -119,10 +119,12 @@ server = net.createServer((c) => {
           }
           break;
         case "historyPeers":
+          // Send all peer ips till now. Probably we have to do it different way if we need names though.
           populateAndPrintHistory(JSON.parse(data.split('|')[1]));
           populateAndConnectToAllPeers(JSON.parse(data.split('|')[2]), c);
           break;
         case "BECOMINGHOST":
+          // Command from server that we are promote to host.
           if (comingFromServer) {
             isHost = true;
             console.log("system> "+myName+" is host");
@@ -130,9 +132,11 @@ server = net.createServer((c) => {
           }
           break;
         case "MYNAMEIS":
+          // Command from everyone stating his name.
           peers[comingIp].name = data.split('|')[1];
           break;
         default:
+          // Just chat.
           if (data.length > 0) {
             console.log(data);
             history.push(data);
@@ -147,8 +151,8 @@ server = net.createServer((c) => {
      delete peers[comingIp];
     }
     if (trace) {console.log("some server end");}
-    console.log("system> "+comingIp+" disconnected");
-    broadcast("system> "+comingIp+" disconnected");
+    console.log("system> "+peers[comingIp]+" disconnected");
+    broadcast("system> "+peers[comingIp]+" disconnected");
   });
 });
 
@@ -193,7 +197,7 @@ var populateAndConnectToAllPeers = function(ipArray,  hostSocket) {
     peers[x] = {};
   });
   Object.keys(peers).forEach(function(x,i) {
-    // don't connect to host
+    // Don't connect to host.
     if (i == 0) {
       peers[x].clientSocket = hostSocket;
     } else {
