@@ -22,6 +22,7 @@ var net = require('net')
 server = net.createServer((c) => {
   let comingIp = c.remoteAddress.split(':')[3];
   var comingFromServer = comingIp == serverIp;
+  if (trace) console.log(comingIp);
   if(!comingFromServer) {
     // we have new connection not coming from the server. Record it.
     if (!peers[comingIp]) {
@@ -118,12 +119,16 @@ server = net.createServer((c) => {
   });
 
   c.on('close', function(){
+    var name = peers[comingIp].name;
+    if (trace) console.log(name);;
     if (peers[comingIp]) {
      delete peers[comingIp];
     }
-    if (trace) {console.log("some server end");}
-    console.log("system> "+peers[comingIp]+" disconnected");
-    broadcast("system> "+peers[comingIp]+" disconnected");
+    if (trace) console.log(name);
+    if (trace) console.log("some server socket end");
+    if (trace) console.log(Object.keys(peers).forEach(function(x,i){console.log(x + " -> " + peers[x].name);}));
+    console.log("system> "+name+" disconnected");
+    broadcast("system> "+name+" disconnected");
   });
 });
 
