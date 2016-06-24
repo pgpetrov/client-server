@@ -24,9 +24,11 @@ server = net.createServer((c) => {
   var comingFromServer = comingIp == serverIp;
   if(!comingFromServer) {
     // we have new connection not coming from the server. Record it.
-    peers[comingIp] = {
-      clientSocket : c
-    };
+    if (!peers[comingIp]) {
+      peers[comingIp] = {
+        clientSocket : c
+      };
+    }
   } else {
     // We will need this if we are host.
     mainServerSocket = c;
@@ -216,7 +218,7 @@ client.connect({port: 8124, host: serverIp}, function() {
           peers[data.split('|')[2]] = {
             name : data.split('|')[3]
           };
-          //we do nothing here. Server will notify the host about us.
+          //we do nothing more here. Server will notify the host about us.
           break;
         default:
       }
