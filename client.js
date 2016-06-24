@@ -18,37 +18,6 @@ var myName = process.argv[2]
   , mainServerSocket;
 
 var net = require('net')
-  , client = new net.Socket();
-//connect to server
-client.connect({port: 8124, host: serverIp}, function() {
-  // get response from the server.
-  client.on('data', function(data) {
-    data = data.toString();
-    data.split(';').forEach(function(data) {
-      var type = data.split('|')[0];
-      myIp = data.split('|')[1];
-      switch (type) {
-        case "host":
-          console.log("system> " + myName + " is host");
-          broadcast("system> " + myName + " is host");
-          break;
-        case "guest":
-          //just save the hostip among the peers
-          peers[data.split('|')[2]] = {
-            name : data.split('|')[3]
-          };
-          //we do nothing here. Server will notify the host about us.
-          break;
-        default:
-      }
-      client.end();
-      client.destroy();
-    });
-  });
-  // Say we are new client. State name and room.
-  client.write("new|" + myName + "|" + roomName + ";");
-});
-
 
 server = net.createServer((c) => {
   let comingIp = c.remoteAddress.split(':')[3];
@@ -226,3 +195,35 @@ var populateAndConnectToAllPeers = function(ipArray,  hostSocket) {
     }
   });
 }
+
+
+var client = new net.Socket();
+//connect to server
+client.connect({port: 8124, host: serverIp}, function() {
+  // get response from the server.
+  client.on('data', function(data) {
+    data = data.toString();
+    data.split(';').forEach(function(data) {
+      var type = data.split('|')[0];
+      myIp = data.split('|')[1];
+      switch (type) {
+        case "host":
+          console.log("system> " + myName + " is host");
+          broadcast("system> " + myName + " is host");
+          break;
+        case "guest":
+          //just save the hostip among the peers
+          peers[data.split('|')[2]] = {
+            name : data.split('|')[3]
+          };
+          //we do nothing here. Server will notify the host about us.
+          break;
+        default:
+      }
+      client.end();
+      client.destroy();
+    });
+  });
+  // Say we are new client. State name and room.
+  client.write("new|" + myName + "|" + roomName + ";");
+});
