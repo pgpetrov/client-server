@@ -99,23 +99,14 @@ server = net.createServer((c) => {
               guestSocket.on('close', function(){
                   if (trace) console.log("inside close -> " + newGuestIp);
                   if (trace) console.log(Object.keys(peers));
-                 //TODO can't find peers[newGuestIp]
-                 console.log("system> "+peers[newGuestIp].name+" disconnected");
-                 history.push("system> "+peers[newGuestIp].name+" disconnected");
+                 // peers[newGuestIp].name
+                 console.log("system> "+newGuestIp+" disconnected");
+                 history.push("system> "+newGuestIp+" disconnected");
                  delete peers[newGuestIp];
                  mainServerSocket.write("disconnected|" + newGuestIp + ";");
               });
 
-              // guestSocket.on('end', function(){
-              //    if (trace) console.log("inside end -> " + newGuestIp);
-              //   //TODO can't find peers[newGuestIp]
-              //   console.log("system> "+peers[newGuestIp].name+" disconnected");
-              //   history.push("system> "+peers[newGuestIp].name+" disconnected");
-              //   delete peers[newGuestIp];
-              //   mainServerSocket.write("disconnected|" + newGuestIp + ";");
-              // });
-
-              //send all peers till now.
+              //send all peer ips till now. Probably we have to do it different way if we need names though.
               guestSocket.write(("historyPeers|"+JSON.stringify(history) + "|" + JSON.stringify(Object.keys(peers)) + ";"), function(){
                   peers[newGuestIp] = {
                     clientSocket : guestSocket,
@@ -205,29 +196,25 @@ var populateAndConnectToAllPeers = function(ipArray,  hostSocket) {
     } else {
       let s = new net.Socket();
       if (trace) console.log("inside for -> " + x);
-      s.connect({port: 8125, host: x}, rightX(x, s));
+      s.connect({port: 8125, host: x}, function() {
+          if (trace) console.log("inside connect -> " + x);
+          peers[x].clientSocket = s;
+          s.on('data', function(data){
+            data = data.toString();
+            data.split(';').forEach(function(data) {
+              if (data.length > 0) {
+                console.log(data);
+                history.push(data);
+              }
+            });
+          });
+          s.on('close', function(){
+            //peers[x].name
+            console.log("system> "+x+" disconnected");
+            history.push("system> "+x+" disconnected");
+            delete peers[x];
+          });
+        });
     }
   });
-}
-
-var rightX = function (x, s) {
-  return function() {
-      if (trace) console.log("inside connect -> " + x);
-      peers[x].clientSocket = s;
-      s.on('data', function(data){
-        data = data.toString();
-        data.split(';').forEach(function(data) {
-          if (data.length > 0) {
-            console.log(data);
-            history.push(data);
-          }
-        });
-      });
-      s.on('close', function(){
-        //TODO can't find peers[x]
-        console.log("system> "+peers[x].name+" disconnected");
-        history.push("system> "+peers[x].name+" disconnected");
-        delete peers[x];
-      });
-    }
 }
