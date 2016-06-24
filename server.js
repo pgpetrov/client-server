@@ -1,6 +1,14 @@
 "use strict";
 const net = require('net');
 var rooms = {};
+/**
+* Setup server for initial registration for all the users.
+* Expects and responds to message new|<clientName>|<clientRoom>
+* Responds with guest|ip|hostip or host|ip
+* Cloeses the socket. If Host connects to him after.
+*
+**/
+
 const server = net.createServer((c) => {
   c.on('data', function(data) {
     data = data.toString();
@@ -14,7 +22,7 @@ const server = net.createServer((c) => {
             let clientRoom = data.split('|')[2];
             let guestIp = c.remoteAddress.split(':')[3];
             if (!rooms[clientRoom]) {
-              //respond you are host now and send your ip. will be needed later
+              //respond you are host now and send your ip. will be needed later. Closes the socket
               c.write(("host|"+guestIp + ";"), function() {c.destroy()});
 
               rooms[clientRoom] = {
@@ -28,7 +36,7 @@ const server = net.createServer((c) => {
 
             } else {
 
-              c.write("guest|" + guestIp + "|" + rooms[clientRoom].hostIp + ";");
+              c.write("guest|" + guestIp + "|" + rooms[clientRoom].hostIp + "|" + rooms[clientRoom].name + ";");
               console.log("pushing " + clientName + " with ip " + guestIp);
               //guest came for this room. Send him the host ip.
               rooms[clientRoom].roomGuests.push({
@@ -47,18 +55,22 @@ const server = net.createServer((c) => {
   });
 });
 
+// Function used when new host is chosen. Sets an event on close of that host to call self.
 var setupHostConnection = function(guestIp, clientName, clientRoom) {
 
   var clientToHost = new net.Socket();
   clientToHost.connect({port: 8125, host: guestIp}, function() {
     console.log("connected to host");
+    //update the host socket for that room
     rooms[clientRoom].hostSocket = clientToHost;
 
+    //On host disconnect
     clientToHost.on('close', function() {
       console.log("OUCH host " + clientName + " for room " + clientRoom + " disconnected!");
       console.log(rooms[clientRoom].roomGuests);
       // Handle hosts disconnect
       if (rooms[clientRoom].roomGuests.length > 0) {
+        //get the first guest and promote
         rooms[clientRoom].name = rooms[clientRoom].roomGuests[0].name;
         rooms[clientRoom].hostIp = rooms[clientRoom].roomGuests[0].guestIp;
         rooms[clientRoom].roomGuests.splice(0,1);
@@ -81,6 +93,7 @@ var setupHostConnection = function(guestIp, clientName, clientRoom) {
       }
     });
 
+    // after connected to the host all messages we expect from him are regarding some guest disconnect.
     clientToHost.on('data', function(data) {
       data = data.toString();
       data.split(';').forEach(function(data) {

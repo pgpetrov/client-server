@@ -35,7 +35,7 @@ client.connect({port: 8124, host: serverIp}, function() {
         case "guest":
           //just save the hostip among the peers
           peers[data.split('|')[2]] = {
-            name : myName
+            name : data.split('|')[3]
           };
           //we do nothing here. Server will notify the host about us.
           break;
@@ -100,8 +100,8 @@ server = net.createServer((c) => {
                   if (trace) console.log("inside close -> " + newGuestIp);
                   if (trace) console.log(Object.keys(peers));
                  // peers[newGuestIp].name
-                 console.log("system> "+newGuestIp+" disconnected");
-                 history.push("system> "+newGuestIp+" disconnected");
+                 console.log("system> "+peers[newGuestIp].name+" disconnected");
+                 history.push("system> "+peers[newGuestIp].name+" disconnected");
                  delete peers[newGuestIp];
                  mainServerSocket.write("disconnected|" + newGuestIp + ";");
               });
@@ -128,6 +128,9 @@ server = net.createServer((c) => {
             console.log("system> "+myName+" is host");
             broadcast("system> "+myName+" is host");
           }
+          break;
+        case "MYNAMEIS":
+          peers[comingIp].name = data.split('|')[1];
           break;
         default:
           if (data.length > 0) {
@@ -199,6 +202,7 @@ var populateAndConnectToAllPeers = function(ipArray,  hostSocket) {
       s.connect({port: 8125, host: x}, function() {
           if (trace) console.log("inside connect -> " + x);
           peers[x].clientSocket = s;
+          s.write("MYNAMEIS|"+myName);
           s.on('data', function(data){
             data = data.toString();
             data.split(';').forEach(function(data) {
@@ -210,8 +214,8 @@ var populateAndConnectToAllPeers = function(ipArray,  hostSocket) {
           });
           s.on('close', function(){
             //peers[x].name
-            console.log("system> "+x+" disconnected");
-            history.push("system> "+x+" disconnected");
+            console.log("system> "+peers[x].name+" disconnected");
+            history.push("system> "+peers[x].name+" disconnected");
             delete peers[x];
           });
         });
